@@ -11,8 +11,10 @@ class WhatsAppClient {
     let executablePath = undefined;
 
     if (process.env.NODE_ENV === "production") {
-      console.log("🔧 Production environment: Using Puppeteer's bundled Chromium");
-      
+      console.log(
+        "🔧 Production environment: Using Puppeteer's bundled Chromium"
+      );
+
       // Only use system Chrome if explicitly set via environment variable
       if (process.env.CHROME_BIN) {
         executablePath = process.env.CHROME_BIN;
@@ -66,19 +68,25 @@ class WhatsAppClient {
         console.log(
           "📱 Open WhatsApp → Settings → Linked Devices → Link a Device"
         );
-        console.log("📱 Then scan this QR code:\n");
 
+        // Store QR code for web display
+        this.qrCode = qr;
+        this.qrGenerated = true;
+
+        // Show QR code in console (may be truncated in Render logs)
         try {
           qrcode.generate(qr, { small: true });
-          console.log("\n⏳ Waiting for you to scan the QR code...");
-          console.log(
-            "💡 Make sure your phone and computer are on the same network"
-          );
-          qrDisplayed = true;
         } catch (error) {
           console.error("❌ Error generating QR code:", error);
-          console.log("🔗 Manual connection required");
         }
+
+        console.log("\n🌐 For better QR code visibility, visit:");
+        console.log("   https://your-app-name.onrender.com/qr");
+        console.log("\n⏳ Waiting for you to scan the QR code...");
+        console.log(
+          "💡 Make sure your phone and computer are on the same network"
+        );
+        qrDisplayed = true;
       }
     });
 
@@ -86,6 +94,10 @@ class WhatsAppClient {
       console.log("✅ WhatsApp client is ready!");
       console.log("🤖 Bot is now connected and ready to receive messages!");
       qrDisplayed = false; // Reset for future reconnections
+
+      // Clear QR code data when connected
+      this.qrCode = null;
+      this.qrGenerated = false;
     });
 
     this.client.on("authenticated", () => {
@@ -151,10 +163,14 @@ class WhatsAppClient {
       // Production-specific error handling
       if (process.env.NODE_ENV === "production") {
         console.error("🔧 Production environment detected. Common issues:");
-        console.error("   - Using Puppeteer's bundled Chromium (no system Chrome needed)");
+        console.error(
+          "   - Using Puppeteer's bundled Chromium (no system Chrome needed)"
+        );
         console.error("   - Verify sufficient memory (at least 512MB)");
         console.error("   - Check network connectivity to WhatsApp servers");
-        console.error("   - If you want to use system Chrome, set CHROME_BIN environment variable");
+        console.error(
+          "   - If you want to use system Chrome, set CHROME_BIN environment variable"
+        );
       }
 
       throw error;
