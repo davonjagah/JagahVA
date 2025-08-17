@@ -1,0 +1,47 @@
+{
+  "name": "jagahva",
+  "version": "1.0.0",
+  "description": "Open-Source WhatsApp Bot for Productivity Self-Messaging - Transform your WhatsApp into a personal productivity assistant",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "node tests/test.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "productivity",
+    "goals",
+    "habits",
+    "self-messaging",
+    "ai",
+    "grok",
+    "openai"
+  ],
+  "author": "JagahVA Team",
+  "license": "MIT",
+  "dependencies": {
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "lowdb": "^6.0.1",
+    "openai": "^4.20.1",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.23.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/jagahva.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/jagahva/issues"
+  },
+  "homepage": "https://github.com/yourusername/jagahva#readme"
+}

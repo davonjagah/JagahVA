@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JagahVA - WhatsApp Goal Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 2rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .qr-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .qr-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .qr-code {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 1rem 0;
+            border: 2px dashed #dee2e6;
+        }
+
+        .qr-placeholder {
+            font-size: 4rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .qr-instructions {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .info-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-list li:before {
+            content: "✨";
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .commands {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .command {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            margin: 0.2rem 0;
+            display: inline-block;
+        }
+
+        .links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .status {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #28a745;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎯 JagahVA</div>
+            <div class="tagline">Your Personal WhatsApp Goal Tracker & Task Manager</div>
+        </div>
+
+        <div class="main-content">
+            <div class="qr-section">
+                <h2 class="qr-title">🔐 Connect Your WhatsApp</h2>
+                <div class="qr-code">
+                    <div class="qr-placeholder">📱</div>
+                    <p>QR Code will appear in the console when bot is running</p>
+                </div>
+                <div class="qr-instructions">
+                    <strong>How to connect:</strong><br>
+                    1. Start the bot with: <code>npm start</code><br>
+                    2. Scan the QR code with WhatsApp<br>
+                    3. Send <code>!help</code> to test
+                </div>
+                <div class="status">
+                    <strong>Status:</strong> Bot not running
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h2 class="section-title">🚀 Features</h2>
+                <ul class="feature-list">
+                    <li>Set recurring goals with natural language</li>
+                    <li>Create day-specific task lists</li>
+                    <li>Track daily progress and completion</li>
+                    <li>View statistics and streaks</li>
+                    <li>Edit tasks on the fly</li>
+                    <li>Local data storage (no cloud required)</li>
+                    <li>Regex-based parsing (no API costs)</li>
+                </ul>
+
+                <h2 class="section-title">💬 Commands</h2>
+                <div class="commands">
+                    <div><span class="command">!setgoals</span> - Set recurring goals</div>
+                    <div><span class="command">!setday Monday</span> - Set day-specific tasks</div>
+                    <div><span class="command">!today</span> - View today's tasks</div>
+                    <div><span class="command">!tomorrow</span> - View tomorrow's tasks</div>
+                    <div><span class="command">!listgoals</span> - List all goals</div>
+                    <div><span class="command">!addtask</span> - Add one-time task</div>
+                    <div><span class="command">!complete</span> - Mark task done/undone</div>
+                    <div><span class="command">!weekprogress</span> - View weekly progress</div>
+                    <div><span class="command">!progress</span> - Log your progress</div>
+                    <div><span class="command">!stats</span> - View statistics</div>
+                    <div><span class="command">!help</span> - Show all commands</div>
+                </div>
+
+                <h2 class="section-title">📋 Example Usage</h2>
+                <div class="commands">
+                    <div><strong>Set recurring goals:</strong> <span class="command">!setgoals Workout 4 times a week. Pray every day</span></div>
+                    <div><strong>Set Monday tasks:</strong> <span class="command">!setday Monday Workout, Read 10 pages, Call mom</span></div>
+                    <div><strong>Set birthday reminder:</strong> <span class="command">!setdate 21 October 2025 Wish Eniola Happy Birthday</span></div>
+                    <div><strong>Log progress:</strong> <span class="command">!progress I hit the gym, finished reading</span></div>
+                </div>
+
+                <h2 class="section-title">📋 Usage Guidelines</h2>
+                <div class="commands">
+                    <div><strong>💬 Messaging Tips:</strong></div>
+                    <div>• Use natural language for goals: "Workout 4 times a week"</div>
+                    <div>• Be specific with progress: "I hit the gym, finished reading chapter 3"</div>
+                    <div>• Edit tasks with task number: "!edittodo 1 Pray for 30 minutes"</div>
+                    <div>• Date format: "21 October 2025" or "21 Oct 2025"</div>
+                </div>
+
+                <h2 class="section-title">🛡️ Safety Guidelines</h2>
+                <div class="commands">
+                    <div>• Keep daily messages under 20 for WhatsApp safety</div>
+                    <div>• Bot only responds to commands starting with "!"</div>
+                    <div>• All data is stored locally on your device</div>
+                    <div>• Bot responds within 1-2 seconds (rate limiting)</div>
+                </div>
+
+                <h2 class="section-title">💡 Getting Started</h2>
+                <div class="commands">
+                    <div>1. Set recurring goals: <span class="command">!setgoals Workout 4 times a week. Pray every day</span></div>
+                    <div>2. Set day-specific tasks: <span class="command">!setday Monday Workout, Read 10 pages</span></div>
+                    <div>3. Set date-specific tasks: <span class="command">!setdate 21 October 2025 Wish Eniola Happy Birthday</span></div>
+                    <div>4. Check today's tasks: <span class="command">!today</span></div>
+                    <div>5. Check tomorrow's tasks: <span class="command">!tomorrow</span></div>
+                    <div>6. Add quick tasks: <span class="command">!addtask Buy groceries</span></div>
+                    <div>7. Mark tasks complete: <span class="command">!complete 1</span></div>
+                    <div>8. View weekly progress: <span class="command">!weekprogress</span></div>
+                    <div>9. Log progress: <span class="command">!progress I hit the gym</span></div>
+                    <div>10. View stats: <span class="command">!stats</span></div>
+                </div>
+
+                <div class="links">
+                    <a href="https://github.com/yourusername/jagahva" class="btn btn-primary">
+                        📚 GitHub
+                    </a>
+                    <a href="README.md" class="btn btn-secondary">
+                        📖 Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple status checker
+        function checkBotStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusEl = document.querySelector('.status');
+                    if (data.running) {
+                        statusEl.innerHTML = '<strong>Status:</strong> Bot is running';
+                        statusEl.style.background = '#d4edda';
+                        statusEl.style.color = '#155724';
+                        statusEl.style.borderLeftColor = '#28a745';
+                    } else {
+                        statusEl.innerHTML = '<strong>Status:</strong> Bot not running';
+                        statusEl.style.background = '#f8d7da';
+                        statusEl.style.color = '#721c24';
+                        statusEl.style.borderLeftColor = '#dc3545';
+                    }
+                })
+                .catch(() => {
+                    const statusEl = document.querySelector('.status');
+                    statusEl.innerHTML = '<strong>Status:</strong> Bot not running';
+                    statusEl.style.background = '#f8d7da';
+                    statusEl.style.color = '#721c24';
+                    statusEl.style.borderLeftColor = '#dc3545';
+                });
+        }
+
+        // Check status every 5 seconds
+        setInterval(checkBotStatus, 5000);
+        checkBotStatus();
+    </script>
+</body>
+</html> 

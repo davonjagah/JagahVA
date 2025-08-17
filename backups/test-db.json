@@ -1,0 +1,42 @@
+{
+  "users": {
+    "test-user@c.us": {
+      "goals": [
+        {
+          "id": 1755452421030,
+          "task": "Pray",
+          "frequency": "daily",
+          "count": 7,
+          "progress": [
+            {
+              "date": "2025-08-17",
+              "done": true
+            }
+          ]
+        },
+        {
+          "id": 1755452421032,
+          "task": "Workout",
+          "frequency": "weekly",
+          "count": 4,
+          "progress": []
+        }
+      ],
+      "todos": {
+        "2025-08-17": [
+          {
+            "task": "Pray",
+            "goalId": 1755452421030,
+            "completed": false
+          },
+          {
+            "task": "Workout",
+            "goalId": 1755452421032,
+            "completed": false
+          }
+        ]
+      },
+      "stats": {}
+    }
+  }
+}

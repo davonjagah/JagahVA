@@ -1,0 +1,997 @@
+const { Client } = require("whatsapp-web.js");
+const qrcode = require("qrcode-terminal");
+const { Low } = require("lowdb");
+const { JSONFile } = require("lowdb/node");
+const express = require("express");
+const path = require("path");
+const {
+  format,
+  startOfWeek,
+  endOfWeek,
+  isWithinInterval,
+  isSameWeek,
+  getWeek,
+} = require("date-fns");
+
+require("dotenv").config();
+
+// Initialize WhatsApp client
+const client = new Client({
+  puppeteer: {
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--no-first-run",
+      "--disable-extensions",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+      "--disable-web-security",
+      "--disable-features=VizDisplayCompositor",
+    ],
+    timeout: 60000,
+    // Use bundled Chromium (default)
+  },
+  // Add WhatsApp Web.js specific options
+  webVersion: "2.2402.5",
+  webVersionCache: {
+    type: "local",
+  },
+});
+
+// Initialize database
+const adapter = new JSONFile("db.json");
+const db = new Low(adapter, { users: {} });
+
+// Initialize database structure if needed
+async function initializeDatabase() {
+  await db.read();
+  // Ensure the database has the proper structure
+  if (!db.data.users) {
+    db.data.users = {};
+  }
+  // Save the structure if it was missing
+  await db.write();
+}
+
+// Configuration
+const CONFIG = {
+  REMINDER_TIME: process.env.REMINDER_TIME || "20:00",
+  TIMEZONE: process.env.TIMEZONE || "GMT",
+  DEBUG: process.env.DEBUG === "true" || false,
+  ALLOWED_NUMBER: process.env.ALLOWED_NUMBER || null, // Set this to your WhatsApp number
+};
+
+// Express server setup
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Serve static files
+app.use(express.static(path.join(__dirname)));
+
+// Status endpoint
+app.get("/status", (req, res) => {
+  res.json({
+    running: true,
+    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+  });
+});
+
+// Serve the landing page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// Start Express server
+app.listen(PORT, () => {
+  console.log(`🌐 Web server running on http://localhost:${PORT}`);
+});
+
+// Utility functions
+function log(message) {
+  if (CONFIG.DEBUG) {
+    console.log(`[${new Date().toISOString()}] ${message}`);
+  }
+}
+
+// Get current week start (Sunday)
+function getCurrentWeekStart(date = new Date()) {
+  return startOfWeek(date, { weekStartsOn: 0 }); // 0 = Sunday
+}
+
+// Get current week end (Saturday)
+function getCurrentWeekEnd(date = new Date()) {
+  return endOfWeek(date, { weekStartsOn: 0 }); // 0 = Sunday
+}
+
+// Check if a date is in the current week
+function isInCurrentWeek(date) {
+  return isSameWeek(new Date(), date, { weekStartsOn: 0 });
+}
+
+async function sendReply(msg, text) {
+  try {
+    // Add delay to avoid rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await msg.reply(text);
+    log(`Replied to ${msg.from}: ${text.substring(0, 50)}...`);
+  } catch (error) {
+    console.error("Error sending reply:", error);
+  }
+}
+
+// Regex-based goal parsing
+async function parseGoals(userId, text) {
+  console.log("🔄 Using regex parsing for goals...");
+  console.log("📝 Input text:", text);
+  const goals = [];
+
+  // Daily goals - multiple patterns
+  const dailyPatterns = [
+    /([^,]+?)\s+(?:every\s+)?day/gi,
+    /([^,]+?)\s+everyday/gi,
+    /([^,]+?)\s+daily/gi,
+  ];
+
+  dailyPatterns.forEach((pattern, index) => {
+    console.log(`🔍 Testing daily pattern ${index + 1}:`, pattern);
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const task = match[1].trim();
+      console.log(`✅ Found daily goal: "${task}"`);
+
+      // Check if goal already exists to avoid duplicates
+      const exists = goals.some(
+        (g) => g.task.toLowerCase() === task.toLowerCase()
+      );
+      if (!exists) {
+        goals.push({
+          id: Date.now() + Math.random(),
+          task: task,
+          frequency: "daily",
+          count: 7,
+          progress: [],
+        });
+      }
+    }
+  });
+
+  // Weekly goals - multiple patterns
+  const weeklyPatterns = [
+    /([^,]+?)\s+(\d+)\s+times?\s+a\s+week/gi,
+    /([^,]+?)\s+(\d+)\s+times?\s+per\s+week/gi,
+    /([^,]+?)\s+(\d+)\s+times?\s+weekly/gi,
+  ];
+
+  weeklyPatterns.forEach((pattern, index) => {
+    console.log(`🔍 Testing weekly pattern ${index + 1}:`, pattern);
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const task = match[1].trim();
+      const count = parseInt(match[2]);
+      console.log(`✅ Found weekly goal: "${task}" (${count}x)`);
+
+      // Check if goal already exists to avoid duplicates
+      const exists = goals.some(
+        (g) => g.task.toLowerCase() === task.toLowerCase()
+      );
+      if (!exists) {
+        goals.push({
+          id: Date.now() + Math.random(),
+          task: task,
+          frequency: "weekly",
+          count: count,
+          progress: [],
+        });
+      }
+    }
+  });
+
+  console.log("✅ Regex parsing found", goals.length, "goals");
+  console.log("📋 Parsed goals:", JSON.stringify(goals, null, 2));
+
+  // Save to database
+  if (!db.data.users) {
+    db.data.users = {};
+  }
+  if (!db.data.users[userId]) {
+    db.data.users[userId] = {
+      goals: [],
+      todos: {},
+      stats: {},
+    };
+  }
+  console.log("💾 Saving goals to database for user:", userId);
+  console.log("📋 Goals to save:", JSON.stringify(goals, null, 2));
+  db.data.users[userId].goals = goals;
+  await db.write();
+  console.log("✅ Goals saved successfully");
+  console.log("💾 Database after save:", JSON.stringify(db.data, null, 2));
+
+  return goals;
+}
+
+// Simple progress parsing - just mark as completed
+async function parseProgress(userId, text) {
+  const goals = db.data.users[userId]?.goals || [];
+  if (goals.length === 0) return [];
+
+  // Simple approach: if user mentions a goal, mark it as completed
+  const progress = [];
+  const lowerText = text.toLowerCase();
+
+  goals.forEach((goal) => {
+    const goalWords = goal.task.toLowerCase().split(" ");
+    const isMentioned = goalWords.some(
+      (word) => word.length > 2 && lowerText.includes(word)
+    );
+
+    if (isMentioned) {
+      progress.push({
+        task: goal.task,
+        completed: true,
+      });
+    }
+  });
+
+  return progress;
+}
+
+// Update progress in database
+async function updateProgress(userId, progress) {
+  const today = format(new Date(), "yyyy-MM-dd");
+  const user = db.data.users[userId] || { goals: [], todos: {}, stats: {} };
+
+  progress.forEach(({ task, completed }) => {
+    const goal = user.goals.find((g) => g.task === task);
+    if (goal) {
+      goal.progress = goal.progress || [];
+      goal.progress.push({ date: today, done: completed });
+    }
+
+    // Update today's todos
+    const todo = user.todos[today]?.find((t) => t.task === task);
+    if (todo) {
+      todo.completed = completed;
+    }
+  });
+
+  // Update stats
+  user.stats = calculateStats(user);
+
+  db.data.users[userId] = user;
+  await db.write();
+}
+
+// Generate today's tasks
+async function generateTodos(userId, date) {
+  const today = format(new Date(date), "yyyy-MM-dd");
+  const user = db.data.users[userId] || { goals: [], todos: {}, stats: {} };
+  const todos = [];
+
+  // Add recurring goals
+  user.goals.forEach((goal) => {
+    if (goal.frequency === "daily") {
+      todos.push({
+        task: goal.task,
+        goalId: goal.id,
+        completed: false,
+        type: "recurring",
+      });
+    } else if (goal.frequency === "weekly") {
+      const weekProgress =
+        goal.progress?.filter((p) => isInCurrentWeek(new Date(p.date)))
+          .length || 0;
+
+      if (weekProgress < goal.count) {
+        todos.push({
+          task: goal.task,
+          goalId: goal.id,
+          completed: false,
+          type: "recurring",
+          weeklyProgress: `${weekProgress}/${goal.count}`,
+        });
+      }
+    }
+  });
+
+  // Add day-specific tasks
+  const dayNames = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
+  const currentDay = dayNames[new Date(date).getDay()];
+
+  if (user.dayTasks && user.dayTasks[currentDay]) {
+    user.dayTasks[currentDay].forEach((task, index) => {
+      todos.push({
+        task: task,
+        goalId: `day-${currentDay}-${index}`,
+        completed: false,
+        type: "day-specific",
+      });
+    });
+  }
+
+  // Add date-specific tasks
+  if (user.dateTasks && user.dateTasks[today]) {
+    user.dateTasks[today].forEach((task, index) => {
+      todos.push({
+        task: task,
+        goalId: `date-${today}-${index}`,
+        completed: false,
+        type: "date-specific",
+      });
+    });
+  }
+
+  user.todos[today] = todos;
+  db.data.users[userId] = user;
+  await db.write();
+
+  return todos.length > 0
+    ? todos
+    : [
+        {
+          task: "Rest day - No tasks scheduled",
+          goalId: null,
+          completed: false,
+          type: "none",
+        },
+      ];
+}
+
+// Calculate user statistics
+function calculateStats(user) {
+  const today = format(new Date(), "yyyy-MM-dd");
+  const weekStart = startOfWeek(new Date());
+  const weekEnd = endOfWeek(new Date());
+
+  const completedToday =
+    user.todos[today]?.filter((t) => t.completed).length || 0;
+  const totalToday = user.todos[today]?.length || 0;
+
+  // Calculate streak
+  let streak = 0;
+  let currentDate = new Date();
+  while (true) {
+    const dateStr = format(currentDate, "yyyy-MM-dd");
+    const dayTodos = user.todos[dateStr];
+
+    if (!dayTodos || dayTodos.length === 0) break;
+
+    const completed = dayTodos.filter((t) => t.completed).length;
+    if (completed > 0) {
+      streak++;
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return {
+    totalGoals: user.goals.length,
+    completedToday,
+    totalToday,
+    streak,
+    completionRate:
+      totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : 0,
+  };
+}
+
+// Format stats for display
+function formatStats(stats) {
+  return `📊 Your Progress Today:
+✅ Completed: ${stats.completedToday}/${stats.totalToday} tasks
+📈 Completion Rate: ${stats.completionRate}%
+🔥 Current Streak: ${stats.streak} days
+🎯 Total Goals: ${stats.totalGoals}`;
+}
+
+// Main message handler
+async function handleMessage(msg) {
+  const userId = msg.from;
+  console.log(`📨 Received message from ${userId}: "${msg.body}"`);
+
+  // Check if message is from allowed number
+  if (CONFIG.ALLOWED_NUMBER && userId !== CONFIG.ALLOWED_NUMBER) {
+    console.log(
+      `❌ Message from unauthorized number: ${userId}, expected: ${CONFIG.ALLOWED_NUMBER}`
+    );
+    return;
+  }
+
+  // Only respond to commands starting with '!'
+  if (!msg.body.startsWith("!")) return;
+
+  log(`✅ Processing command from ${userId}: ${msg.body}`);
+
+  try {
+    if (msg.body.startsWith("!setgoals")) {
+      const goalsText = msg.body.slice(10).trim();
+      if (!goalsText) {
+        await sendReply(
+          msg,
+          "Please provide goals. Example: !setgoals Workout 4 times a week. Pray every day."
+        );
+        return;
+      }
+
+      console.log("🎯 Setting goals:", goalsText);
+      console.log("👤 User ID for setting goals:", userId);
+
+      try {
+        const goals = await parseGoals(userId, goalsText);
+
+        if (goals && goals.length > 0) {
+          const response = `🎯 Goals set successfully!\n\n${goals
+            .map((g) => `• ${g.task} (${g.count}x/${g.frequency})`)
+            .join("\n")}\n\nUse !today to see your daily tasks.`;
+
+          await sendReply(msg, response);
+        } else {
+          await sendReply(
+            msg,
+            "❌ No goals were parsed. Please try again with simpler formatting."
+          );
+        }
+      } catch (parseError) {
+        console.error("❌ Goal parsing failed:", parseError.message);
+        await sendReply(
+          msg,
+          "❌ Failed to parse goals. Please try again with simpler formatting."
+        );
+      }
+    } else if (msg.body.startsWith("!setdate")) {
+      const dateText = msg.body.slice(9).trim();
+      if (!dateText) {
+        await sendReply(
+          msg,
+          "Please provide date and tasks. Example: !setdate 21 October 2025 Wish Eniola Happy Birthday"
+        );
+        return;
+      }
+
+      // Parse date and tasks
+      const firstSpace = dateText.indexOf(" ");
+      if (firstSpace === -1) {
+        await sendReply(
+          msg,
+          "Please provide date and tasks. Example: !setdate 21 October 2025 Wish Eniola Happy Birthday"
+        );
+        return;
+      }
+
+      // Find the end of the date (look for a pattern like "21 October 2025" or "21 Oct 2025")
+      const datePattern =
+        /^(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})/i;
+      const dateMatch = dateText.match(datePattern);
+
+      if (!dateMatch) {
+        await sendReply(
+          msg,
+          "Please provide a valid date format. Example: !setdate 21 October 2025 Wish Eniola Happy Birthday"
+        );
+        return;
+      }
+
+      const dateStr = dateMatch[1];
+      const tasksText = dateText.substring(dateMatch[0].length).trim();
+
+      // Parse the date
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        await sendReply(
+          msg,
+          "Invalid date format. Example: !setdate 21 October 2025 Wish Eniola Happy Birthday"
+        );
+        return;
+      }
+
+      // Parse tasks
+      const tasks = tasksText
+        .split(",")
+        .map((task) => task.trim())
+        .filter((task) => task.length > 0);
+
+      if (tasks.length === 0) {
+        await sendReply(
+          msg,
+          "Please provide at least one task. Example: !setdate 21 October 2025 Wish Eniola Happy Birthday"
+        );
+        return;
+      }
+
+      // Save date-specific tasks
+      if (!db.data.users[userId]) {
+        db.data.users[userId] = {
+          goals: [],
+          todos: {},
+          stats: {},
+          dayTasks: {},
+          dateTasks: {},
+        };
+      }
+      if (!db.data.users[userId].dateTasks) {
+        db.data.users[userId].dateTasks = {};
+      }
+
+      const dateKey = format(date, "yyyy-MM-dd");
+      db.data.users[userId].dateTasks[dateKey] = tasks;
+      await db.write();
+
+      const formattedDate = format(date, "EEEE, MMMM do, yyyy");
+      const response = `📅 Tasks set for ${formattedDate}!\n\n${tasks
+        .map((task, i) => `${i + 1}. ${task}`)
+        .join("\n")}\n\nUse !today to see your daily tasks.`;
+
+      await sendReply(msg, response);
+    } else if (msg.body.startsWith("!setday")) {
+      const dayText = msg.body.slice(8).trim();
+      if (!dayText) {
+        await sendReply(
+          msg,
+          "Please provide day and tasks. Example: !setday Monday Workout, Read 10 pages, Call mom"
+        );
+        return;
+      }
+
+      // Parse day and tasks
+      const firstSpace = dayText.indexOf(" ");
+      if (firstSpace === -1) {
+        await sendReply(
+          msg,
+          "Please provide day and tasks. Example: !setday Monday Workout, Read 10 pages, Call mom"
+        );
+        return;
+      }
+
+      const day = dayText.substring(0, firstSpace).toLowerCase();
+      const tasksText = dayText.substring(firstSpace + 1);
+
+      // Validate day
+      const validDays = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
+      if (!validDays.includes(day)) {
+        await sendReply(
+          msg,
+          "Please provide a valid day. Example: !setday Monday Workout, Read 10 pages"
+        );
+        return;
+      }
+
+      // Parse tasks
+      const tasks = tasksText
+        .split(",")
+        .map((task) => task.trim())
+        .filter((task) => task.length > 0);
+
+      if (tasks.length === 0) {
+        await sendReply(
+          msg,
+          "Please provide at least one task. Example: !setday Monday Workout, Read 10 pages"
+        );
+        return;
+      }
+
+      // Save day-specific tasks
+      if (!db.data.users[userId]) {
+        db.data.users[userId] = {
+          goals: [],
+          todos: {},
+          stats: {},
+          dayTasks: {},
+        };
+      }
+      if (!db.data.users[userId].dayTasks) {
+        db.data.users[userId].dayTasks = {};
+      }
+
+      db.data.users[userId].dayTasks[day] = tasks;
+      await db.write();
+
+      const response = `📅 ${
+        day.charAt(0).toUpperCase() + day.slice(1)
+      } tasks set!\n\n${tasks
+        .map((task, i) => `${i + 1}. ${task}`)
+        .join("\n")}\n\nUse !today to see your daily tasks.`;
+
+      await sendReply(msg, response);
+    } else if (msg.body === "!today") {
+      console.log("📅 Generating today's tasks for user:", userId);
+      console.log(
+        "🔍 Available users in database:",
+        Object.keys(db.data.users)
+      );
+      const user = db.data.users[userId];
+      console.log("👤 User data:", JSON.stringify(user, null, 2));
+      const todos = await generateTodos(userId, new Date());
+      console.log("📋 Generated todos:", JSON.stringify(todos, null, 2));
+      const response = `📅 Today's Tasks:\n\n${todos
+        .map((t, i) => {
+          let taskText = `${i + 1}. ${t.task}`;
+          if (t.weeklyProgress) {
+            taskText += ` (${t.weeklyProgress} this week)`;
+          }
+          taskText += ` - ${t.completed ? "✅ Done" : "⏳ Pending"}`;
+          return taskText;
+        })
+        .join("\n")}\n\nUse !progress <tasks> to log your progress.`;
+
+      await sendReply(msg, response);
+    } else if (msg.body === "!tomorrow") {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      console.log("📅 Generating tomorrow's tasks for user:", userId);
+      const todos = await generateTodos(userId, tomorrow);
+
+      const tomorrowFormatted = format(tomorrow, "EEEE, MMMM do");
+      const response = `📅 Tomorrow's Tasks (${tomorrowFormatted}):\n\n${todos
+        .map((t, i) => {
+          let taskText = `${i + 1}. ${t.task}`;
+          if (t.weeklyProgress) {
+            taskText += ` (${t.weeklyProgress} this week)`;
+          }
+          taskText += ` - ⏳ Pending`;
+          return taskText;
+        })
+        .join("\n")}\n\nUse !today to see today's tasks.`;
+
+      await sendReply(msg, response);
+    } else if (msg.body === "!listgoals") {
+      const user = db.data.users[userId];
+      if (!user || user.goals.length === 0) {
+        await sendReply(msg, "No goals set yet. Use !setgoals to get started!");
+        return;
+      }
+
+      let response = `🎯 Your Current Goals:\n\n`;
+
+      user.goals.forEach((goal, index) => {
+        const totalProgress = goal.progress?.filter((p) => p.done).length || 0;
+        const weeklyProgress =
+          goal.progress?.filter(
+            (p) => isInCurrentWeek(new Date(p.date)) && p.done
+          ).length || 0;
+
+        response += `${index + 1}. ${goal.task}\n`;
+        response += `   📊 ${goal.frequency}: ${goal.count}x`;
+        if (goal.frequency === "weekly") {
+          response += ` (${weeklyProgress}/${goal.count} this week)`;
+        }
+        response += `\n   📈 Total completed: ${totalProgress} times\n\n`;
+      });
+
+      await sendReply(msg, response);
+    } else if (msg.body.startsWith("!addtask")) {
+      const taskText = msg.body.slice(9).trim();
+      if (!taskText) {
+        await sendReply(
+          msg,
+          "Please provide a task. Example: !addtask Buy groceries"
+        );
+        return;
+      }
+
+      const today = format(new Date(), "yyyy-MM-dd");
+      if (!db.data.users[userId]) {
+        db.data.users[userId] = { goals: [], todos: {}, stats: {} };
+      }
+      if (!db.data.users[userId].todos[today]) {
+        db.data.users[userId].todos[today] = [];
+      }
+
+      const newTask = {
+        task: taskText,
+        goalId: `manual-${Date.now()}`,
+        completed: false,
+        type: "manual",
+      };
+
+      db.data.users[userId].todos[today].push(newTask);
+      await db.write();
+
+      const response = `✅ Task added: ${taskText}\n\nUse !today to see all your tasks.`;
+      await sendReply(msg, response);
+    } else if (msg.body.startsWith("!complete")) {
+      const parts = msg.body.split(" ");
+      if (parts.length < 2) {
+        await sendReply(msg, "Usage: !complete <number>\nExample: !complete 1");
+        return;
+      }
+
+      const index = parseInt(parts[1]) - 1;
+      const today = format(new Date(), "yyyy-MM-dd");
+      const todos = db.data.users[userId]?.todos[today] || [];
+
+      if (index < 0 || index >= todos.length) {
+        await sendReply(
+          msg,
+          `Invalid task number. Use !today to see available tasks (1-${todos.length}).`
+        );
+        return;
+      }
+
+      const task = todos[index];
+      task.completed = !task.completed; // Toggle completion
+      await db.write();
+
+      const status = task.completed ? "✅ Completed" : "⏳ Pending";
+      const response = `📝 Task updated: ${task.task} - ${status}\n\nUse !today to see all your tasks.`;
+      await sendReply(msg, response);
+    } else if (msg.body === "!weekprogress") {
+      const user = db.data.users[userId];
+      if (!user || user.goals.length === 0) {
+        await sendReply(msg, "No goals set yet. Use !setgoals to get started!");
+        return;
+      }
+
+      const weeklyGoals = user.goals.filter(
+        (goal) => goal.frequency === "weekly"
+      );
+      if (weeklyGoals.length === 0) {
+        await sendReply(
+          msg,
+          "No weekly goals set. Use !setgoals to set weekly goals."
+        );
+        return;
+      }
+
+      const weekStart = format(getCurrentWeekStart(), "EEEE, MMMM do");
+      const weekEnd = format(getCurrentWeekEnd(), "EEEE, MMMM do");
+
+      let response = `📊 Weekly Progress (${weekStart} - ${weekEnd}):\n\n`;
+
+      weeklyGoals.forEach((goal) => {
+        const weekProgress =
+          goal.progress?.filter((p) => isInCurrentWeek(new Date(p.date)))
+            .length || 0;
+
+        const progressBar =
+          "█".repeat(weekProgress) + "░".repeat(goal.count - weekProgress);
+        const percentage = Math.round((weekProgress / goal.count) * 100);
+
+        response += `${goal.task}:\n`;
+        response += `${progressBar} ${weekProgress}/${goal.count} (${percentage}%)\n\n`;
+      });
+
+      await sendReply(msg, response);
+    } else if (msg.body.startsWith("!progress")) {
+      const progressText = msg.body.slice(10).trim();
+      if (!progressText) {
+        await sendReply(
+          msg,
+          "Please describe your progress. Example: !progress I hit the gym, finished reading"
+        );
+        return;
+      }
+
+      const progress = await parseProgress(userId, progressText);
+      if (progress.length === 0) {
+        await sendReply(
+          msg,
+          "No matching goals found. Use !setgoals to set your goals first."
+        );
+        return;
+      }
+
+      await updateProgress(userId, progress);
+      const completedTasks = progress
+        .filter((p) => p.completed)
+        .map((p) => p.task);
+      const response = `🎉 Progress recorded!\n\n✅ Completed: ${completedTasks.join(
+        ", "
+      )}`;
+
+      await sendReply(msg, response);
+    } else if (msg.body.startsWith("!edittodo")) {
+      const parts = msg.body.split(" ");
+      if (parts.length < 3) {
+        await sendReply(
+          msg,
+          "Usage: !edittodo <number> <new task description>"
+        );
+        return;
+      }
+
+      const index = parseInt(parts[1]) - 1;
+      const newText = parts.slice(2).join(" ");
+      const today = format(new Date(), "yyyy-MM-dd");
+      const todos = db.data.users[userId]?.todos[today] || [];
+
+      if (index >= 0 && index < todos.length) {
+        todos[index].task = newText;
+        await db.write();
+
+        const response = `✏️ Task updated!\n\n${todos
+          .map(
+            (t, i) =>
+              `${i + 1}. ${t.task} - ${t.completed ? "✅ Done" : "⏳ Pending"}`
+          )
+          .join("\n")}`;
+
+        await sendReply(msg, response);
+      } else {
+        await sendReply(
+          msg,
+          "Invalid task number. Use !today to see available tasks."
+        );
+      }
+    } else if (msg.body === "!stats") {
+      const user = db.data.users[userId];
+      if (!user || user.goals.length === 0) {
+        await sendReply(msg, "No goals set yet. Use !setgoals to get started!");
+        return;
+      }
+
+      const stats = calculateStats(user);
+      const response = formatStats(stats);
+      await sendReply(msg, response);
+    } else if (msg.body === "!help") {
+      const helpText = `🤖 JagahVA Commands:
+
+🎯 !setgoals <goals> - Set recurring goals
+   Example: !setgoals Workout 4 times a week. Pray every day.
+
+📅 !setday <day> <tasks> - Set tasks for specific day
+   Example: !setday Monday Workout, Read 10 pages, Call mom
+
+📅 !setdate <date> <tasks> - Set tasks for specific date
+   Example: !setdate 21 October 2025 Wish Eniola Happy Birthday
+
+📅 !today - Get today's task list
+📅 !tomorrow - Get tomorrow's task list
+
+🎯 !listgoals - List all your current goals
+📝 !addtask <task> - Add a one-time task for today
+✅ !complete <number> - Mark a specific task as done/undone
+
+📊 !weekprogress - View weekly progress for all goals
+
+📝 !progress <tasks> - Log your progress
+   Example: !progress I hit the gym, finished reading
+
+✏️ !edittodo <number> <text> - Edit a task
+   Example: !edittodo 1 Pray for 30 minutes
+
+📊 !stats - View your progress statistics
+
+❓ !help - Show this help message
+
+💡 Visit the web page for detailed usage guidelines.`;
+
+      await sendReply(msg, helpText);
+    } else {
+      await sendReply(
+        msg,
+        "Unknown command. Type !help for available commands."
+      );
+    }
+  } catch (error) {
+    console.error("Error handling message:", error);
+    await sendReply(msg, "Sorry, something went wrong. Please try again.");
+  }
+}
+
+// WhatsApp event handlers
+client.on("qr", (qr) => {
+  console.log("🔐 Scan this QR code with WhatsApp:");
+  qrcode.generate(qr, { small: true });
+});
+
+client.on("ready", () => {
+  console.log("🚀 JagahVA is live and ready!");
+
+  console.log("💡 Try sending: !help");
+});
+
+client.on("message", (msg) => {
+  console.log(`📨 Received message from ${msg.from}: ${msg.body}`);
+  handleMessage(msg);
+});
+
+client.on("disconnected", (reason) => {
+  console.log("❌ Disconnected:", reason);
+  console.log("🔄 Attempting to reconnect in 5 minutes...");
+  setTimeout(() => {
+    client.initialize();
+  }, 5 * 60 * 1000);
+});
+
+client.on("auth_failure", () => {
+  console.log("❌ Authentication failed. Please scan the QR code again.");
+});
+
+client.on("loading_screen", (percent, message) => {
+  console.log(`🔄 Loading: ${percent}% - ${message}`);
+});
+
+client.on("authenticated", () => {
+  console.log("✅ WhatsApp authenticated successfully!");
+});
+
+client.on("auth_failure", (msg) => {
+  console.log("❌ Authentication failed:", msg);
+});
+
+// Graceful shutdown
+process.on("SIGINT", () => {
+  console.log("\n🛑 Shutting down JagahVA...");
+  client.destroy();
+  process.exit(0);
+});
+
+// Initialize the bot with retry logic
+async function initializeBot() {
+  let retryCount = 0;
+  const maxRetries = 5;
+
+  while (retryCount < maxRetries) {
+    try {
+      console.log(
+        `🚀 Starting JagahVA... (Attempt ${retryCount + 1}/${maxRetries})`
+      );
+
+      // Clear cache on first attempt
+      if (retryCount === 0) {
+        try {
+          const fs = require("fs");
+          if (fs.existsSync(".wwebjs_auth")) {
+            fs.rmSync(".wwebjs_auth", { recursive: true, force: true });
+            console.log("🧹 Cleared auth cache");
+          }
+          if (fs.existsSync(".wwebjs_cache")) {
+            fs.rmSync(".wwebjs_cache", { recursive: true, force: true });
+            console.log("🧹 Cleared browser cache");
+          }
+        } catch (e) {
+          console.log("🧹 Cache cleared");
+        }
+      }
+
+      // Initialize database
+      await initializeDatabase();
+      console.log("💾 Database initialized successfully!");
+
+      await client.initialize();
+      console.log("✅ Bot initialized successfully!");
+      break; // Success, exit the loop
+    } catch (error) {
+      retryCount++;
+      console.error(`❌ Attempt ${retryCount} failed:`, error.message);
+
+      if (retryCount < maxRetries) {
+        const waitTime = retryCount * 3; // Progressive backoff
+        console.log(`🔄 Retrying in ${waitTime} seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, waitTime * 1000));
+      } else {
+        console.error("❌ Failed to start after all retries");
+        console.log("💡 Deployment-friendly solutions:");
+        console.log("   1. Clear cache: rm -rf .wwebjs_auth/ .wwebjs_cache/");
+        console.log("   2. Check internet connection");
+        console.log("   3. Ensure port 3000 is available");
+        console.log("   4. Try running with: DEBUG=true npm start");
+        process.exit(1);
+      }
+    }
+  }
+}
+
+initializeBot();
