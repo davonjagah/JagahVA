@@ -15,7 +15,7 @@ if [ ! -f ".env" ]; then
     echo "⚠️  Warning: .env file not found!"
     echo "📝 Please create .env file from env.example"
     echo "   cp env.example .env"
-    echo "   Then edit .env with your WhatsApp number"
+    echo "   Then edit .env with your Telegram bot token and user ID"
 fi
 
 # Test core functionality
@@ -23,8 +23,8 @@ echo "🧪 Testing core functionality..."
 node tests/test.js
 
 # Start the bot
-echo "🤖 Starting WhatsApp bot..."
-echo "📱 Scan the QR code with your WhatsApp"
+echo "🤖 Starting Telegram bot..."
+echo "📱 Send /start to your bot on Telegram"
 echo "💡 Once connected, send '!help' to test"
 echo "🌐 Web interface: http://localhost:3000"
 

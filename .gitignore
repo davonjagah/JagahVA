@@ -64,7 +64,7 @@ jspm_packages/
 ehthumbs.db
 Thumbs.db
 
-# WhatsApp session data
+# Telegram session data
 .wwebjs_auth/
 .wwebjs_cache/ 
 Guide.md

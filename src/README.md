@@ -7,7 +7,7 @@ src/
 ├── config/           # Configuration files
 │   ├── database.js   # Database configuration (lowdb)
 │   ├── express.js    # Express server configuration
-│   └── whatsapp.js   # WhatsApp client configuration
+│   └── telegram.js   # Telegram client configuration
 ├── controllers/      # Request handlers
 │   └── messageController.js  # Main message handler
 ├── commands/         # Command implementations
@@ -31,7 +31,7 @@ src/
 ### **Configuration Layer** (`config/`)
 - **database.js**: LowDB setup and initialization
 - **express.js**: Web server configuration
-- **whatsapp.js**: WhatsApp Web client setup
+- **telegram.js**: Telegram Bot client setup
 
 ### **Controller Layer** (`controllers/`)
 - **messageController.js**: Routes incoming messages to appropriate commands
@@ -102,6 +102,6 @@ src/
 2. **Command Routing** → Appropriate command class
 3. **Business Logic** → Service layer
 4. **Data Operations** → Database layer
-5. **Response** → User via WhatsApp
+5. **Response** → User via Telegram
 
 This structure ensures maintainability, scalability, and ease of testing. 

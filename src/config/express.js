@@ -56,7 +56,7 @@ class ExpressServer {
         <body>
           <div class="container">
             <h1>🚀 JagahVA</h1>
-            <h2>WhatsApp QR Code</h2>
+                            <h2>Telegram Bot Status</h2>
             
             <div class="qr-code">
               <div id="qrcode"></div>
@@ -66,11 +66,11 @@ class ExpressServer {
             <div class="instructions">
               <h3>📱 How to connect:</h3>
               <ol>
-                <li>Open WhatsApp on your phone</li>
-                <li>Go to Settings → Linked Devices</li>
-                <li>Tap "Link a Device"</li>
-                <li>Point your camera at the QR code above</li>
-                <li>Wait for connection to complete</li>
+                                          <li>Find your bot on Telegram</li>
+                          <li>Send /start to begin</li>
+                          <li>Send !help to see commands</li>
+                          <li>Start setting your goals!</li>
+                          <li>Bot is ready to use</li>
               </ol>
             </div>
             
@@ -92,7 +92,7 @@ class ExpressServer {
                       width: 256,
                       margin: 2
                     });
-                    statusP.textContent = '✅ QR code ready! Scan with WhatsApp';
+                                            statusP.textContent = '✅ Bot is ready! Send /start on Telegram';
                     statusP.style.color = '#28a745';
                   } else {
                     qrDiv.innerHTML = '<p style="color: #666;">⏳ Waiting for QR code...</p>';
@@ -116,20 +116,12 @@ class ExpressServer {
 
     // QR code API endpoint
     this.app.get("/api/qr", (req, res) => {
-      // Get QR code from WhatsApp client if available
-      const whatsappClient = require("./whatsapp");
-      if (whatsappClient.qrCode) {
-        res.json({
-          qr: whatsappClient.qrCode,
-          generated: true,
-        });
-      } else {
-        res.json({
-          qr: null,
-          generated: false,
-          message: "QR code not yet generated",
-        });
-      }
+      // Get bot status
+      res.json({
+        status: "Bot is running",
+        message: "Send /start to your bot on Telegram",
+        ready: true,
+      });
     });
 
     // Status endpoint

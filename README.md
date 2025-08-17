@@ -180,11 +180,11 @@ JagahVA/
 
 ## 🛡️ Safety & Best Practices
 
-### WhatsApp Guidelines
-- Keep message volume under 20 messages/day
-- Bot includes 1-2 second delays between messages
-- Graceful handling of disconnections
-- Rate limiting implemented
+### Telegram Guidelines
+- No message volume limits
+- Instant message delivery
+- Stable 24/7 connection
+- Official Bot API support
 
 ### Data Privacy
 - All data stored locally in `db.json`
@@ -251,4 +251,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for productivity enthusiasts everywhere**
 
-*Transform your WhatsApp into a personal productivity assistant with JagahVA!* # JagahVA
+*Transform your Telegram into a personal productivity assistant with JagahVA!* # JagahVA

@@ -188,8 +188,8 @@ async function runTests() {
     );
     console.log("\n📝 Next steps:");
     console.log("1. Set up your .env file with API keys");
-    console.log('2. Run "npm start" to start the WhatsApp bot');
-    console.log("3. Scan the QR code with your WhatsApp");
+    console.log('2. Run "npm start" to start the Telegram bot');
+console.log("3. Send /start to your bot on Telegram");
     console.log('4. Send "!help" to test the bot');
   } catch (error) {
     console.error("❌ Test failed:", error);
