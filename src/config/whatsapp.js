@@ -61,8 +61,13 @@ class WhatsAppClient {
     let qrTimeout = null;
 
     this.client.on("qr", (qr) => {
+      console.log("📱 New QR code received from WhatsApp...");
+
       if (qrDisplayed) {
         console.log("🔄 QR code already displayed, skipping...");
+        console.log(
+          "💡 If you need a new QR code, wait 2 minutes or restart the bot"
+        );
         return;
       }
 
@@ -96,10 +101,19 @@ class WhatsAppClient {
       if (qrTimeout) {
         clearTimeout(qrTimeout);
       }
+      // Use shorter timeout in development for testing
+      const timeoutDuration =
+        process.env.NODE_ENV === "production" ? 120000 : 30000; // 2 min prod, 30 sec dev
+
       qrTimeout = setTimeout(() => {
-        console.log("⏰ QR code expired, allowing new QR generation...");
+        console.log(
+          `⏰ QR code expired after ${
+            timeoutDuration / 1000
+          }s, allowing new QR generation...`
+        );
         qrDisplayed = false;
-      }, 120000); // 2 minutes
+        console.log("🔄 Ready for new QR code when available...");
+      }, timeoutDuration);
     });
 
     this.client.on("ready", () => {
