@@ -69,15 +69,46 @@ class WhatsAppClient {
           "📱 Open WhatsApp → Settings → Linked Devices → Link a Device"
         );
 
-                // Generate QR code in console
+        // Store QR code for web display
+        this.qrCode = qr;
+
+        // Generate QR code as data URL for better visibility
         const qrcode = require("qrcode");
-        console.log("\n📱 Scan this QR code with WhatsApp:");
-        try {
-          qrcode.generate(qr, { small: true });
-        } catch (error) {
-          console.error("❌ Error generating QR code:", error);
-        }
-        
+        console.log("\n📱 Generating QR code for scanning...");
+
+        // Generate data URL synchronously for reliability
+        qrcode
+          .toDataURL(qr, {
+            width: 256,
+            margin: 1,
+            color: {
+              dark: "#000000",
+              light: "#FFFFFF",
+            },
+          })
+          .then((dataUrl) => {
+            console.log(
+              "\n🌐 Copy this URL and paste in your browser to view QR code:"
+            );
+            console.log(dataUrl);
+            console.log("\n🌐 Or visit this web page for better display:");
+            console.log("   https://jagahva.onrender.com/qr");
+            console.log("\n📱 Instructions:");
+            console.log("1. Copy the data URL above OR visit the web page");
+            console.log("2. The QR code will display as a clear image");
+            console.log("3. Scan it with WhatsApp");
+          })
+          .catch((err) => {
+            console.error("❌ Error generating QR code:", err);
+            // Fallback to console QR code
+            try {
+              console.log("\n📱 Fallback QR code (may be distorted in logs):");
+              qrcode.generate(qr, { small: true });
+            } catch (error) {
+              console.error("❌ Error generating fallback QR code:", error);
+            }
+          });
+
         console.log("\n⏳ Waiting for you to scan the QR code...");
         console.log(
           "💡 Make sure your phone and computer are on the same network"
@@ -90,6 +121,9 @@ class WhatsAppClient {
       console.log("✅ WhatsApp client is ready!");
       console.log("🤖 Bot is now connected and ready to receive messages!");
       qrDisplayed = false; // Reset for future reconnections
+
+      // Clear QR code data when connected
+      this.qrCode = null;
     });
 
     this.client.on("authenticated", () => {
