@@ -58,8 +58,14 @@ class WhatsAppClient {
 
   setupEventHandlers() {
     let qrDisplayed = false;
+    let qrTimeout = null;
 
     this.client.on("qr", (qr) => {
+      if (qrDisplayed) {
+        console.log("🔄 QR code already displayed, skipping...");
+        return;
+      }
+
       console.log("🔐 QR Code received:", typeof qr, qr.length);
       console.log("🔐 Scan this QR code with WhatsApp:");
 
@@ -83,12 +89,29 @@ class WhatsAppClient {
       } catch (error) {
         console.error("❌ Error with data URL generation:", error);
       }
+
+      qrDisplayed = true;
+
+      // Set a timeout to reset the flag if QR expires (2 minutes)
+      if (qrTimeout) {
+        clearTimeout(qrTimeout);
+      }
+      qrTimeout = setTimeout(() => {
+        console.log("⏰ QR code expired, allowing new QR generation...");
+        qrDisplayed = false;
+      }, 120000); // 2 minutes
     });
 
     this.client.on("ready", () => {
       console.log("✅ WhatsApp client is ready!");
       console.log("🤖 Bot is now connected and ready to receive messages!");
-      qrDisplayed = false; // Reset for future reconnections
+
+      // Clear QR display state
+      qrDisplayed = false;
+      if (qrTimeout) {
+        clearTimeout(qrTimeout);
+        qrTimeout = null;
+      }
 
       // Clear QR code data when connected
       this.qrCode = null;
@@ -101,11 +124,19 @@ class WhatsAppClient {
     this.client.on("auth_failure", (msg) => {
       console.error("❌ WhatsApp authentication failed:", msg);
       qrDisplayed = false;
+      if (qrTimeout) {
+        clearTimeout(qrTimeout);
+        qrTimeout = null;
+      }
     });
 
     this.client.on("disconnected", (reason) => {
       console.log("🔌 WhatsApp client disconnected:", reason);
       qrDisplayed = false;
+      if (qrTimeout) {
+        clearTimeout(qrTimeout);
+        qrTimeout = null;
+      }
 
       if (reason === "LOGOUT") {
         console.log("🔄 Reconnecting...");
