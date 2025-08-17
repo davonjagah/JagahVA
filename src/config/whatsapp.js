@@ -1,5 +1,6 @@
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
+const qrcodeData = require("qrcode");
 
 class WhatsAppClient {
   constructor() {
@@ -59,18 +60,29 @@ class WhatsAppClient {
     let qrDisplayed = false;
 
     this.client.on("qr", (qr) => {
+      console.log("🔐 QR Code received:", typeof qr, qr.length);
       console.log("🔐 Scan this QR code with WhatsApp:");
-      qrcode.generate(qr, { small: true });
+
+      try {
+        qrcode.generate(qr, { small: true });
+        console.log("✅ QR code generated successfully");
+      } catch (error) {
+        console.error("❌ Error generating QR code:", error);
+      }
 
       // Also generate data URL for web display
-      qrcode.toDataURL(qr, { width: 256, margin: 1 }, (err, dataUrl) => {
-        if (err) {
-          console.error("❌ Error generating data URL:", err);
-        } else {
-          console.log("\n🌐 Copy this URL for web display:");
-          console.log(dataUrl);
-        }
-      });
+      try {
+        qrcodeData.toDataURL(qr, { width: 256, margin: 1 }, (err, dataUrl) => {
+          if (err) {
+            console.error("❌ Error generating data URL:", err);
+          } else {
+            console.log("\n🌐 Copy this URL for web display:");
+            console.log(dataUrl);
+          }
+        });
+      } catch (error) {
+        console.error("❌ Error with data URL generation:", error);
+      }
     });
 
     this.client.on("ready", () => {
