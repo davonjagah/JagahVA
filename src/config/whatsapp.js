@@ -102,14 +102,14 @@ class WhatsAppClient {
                 console.error("❌ Error generating console QR code:", error);
               }
             }
+
+            console.log("\n⏳ Waiting for you to scan the QR code...");
+            console.log(
+              "💡 Make sure your phone and computer are on the same network"
+            );
+            qrDisplayed = true;
           }
         );
-
-        console.log("\n⏳ Waiting for you to scan the QR code...");
-        console.log(
-          "💡 Make sure your phone and computer are on the same network"
-        );
-        qrDisplayed = true;
       }
     });
 
