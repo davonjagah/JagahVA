@@ -25,6 +25,11 @@ ALLOWED_NUMBER=your-whatsapp-number@c.us
 PORT=10000
 ```
 
+**Optional**: If you encounter Chrome path issues, you can set a custom Chrome path:
+```env
+CHROME_BIN=/usr/bin/chromium-browser
+```
+
 ### 3. Build & Deploy Settings
 
 - **Build Command**: `npm install`
@@ -88,16 +93,22 @@ README.md
 
 ### Common Issues
 
-1. **Timeout Error**
+1. **Chrome/Chromium Not Found**
+   - Error: `spawn /usr/bin/google-chrome-stable ENOENT`
+   - **Solution**: The bot now automatically tries multiple Chrome paths
+   - **Alternative**: Set `CHROME_BIN` environment variable to correct path
+   - **Fallback**: Uses Puppeteer's bundled Chromium if no system Chrome found
+
+2. **Timeout Error**
    - Increase timeout in code (already done)
    - Check memory allocation
    - Verify Chrome installation
 
-2. **Memory Issues**
+3. **Memory Issues**
    - Upgrade to paid plan for more RAM
    - Optimize browser settings (already done)
 
-3. **Network Issues**
+4. **Network Issues**
    - Check firewall settings
    - Verify WhatsApp Web accessibility
 

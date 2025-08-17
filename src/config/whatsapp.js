@@ -7,14 +7,34 @@ class WhatsAppClient {
   }
 
   createClient() {
+    // Try to find the best Chrome executable for the environment
+    let executablePath = undefined;
+
+    if (process.env.NODE_ENV === "production") {
+      // Common Chrome/Chromium paths on different systems
+      const chromePaths = [
+        "/usr/bin/chromium-browser",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/google-chrome",
+        process.env.CHROME_BIN, // Allow custom path via environment variable
+      ].filter(Boolean);
+
+      // Use the first available path or let Puppeteer use its bundled Chromium
+      executablePath = chromePaths[0];
+
+      if (executablePath) {
+        console.log(`🔧 Using Chrome executable: ${executablePath}`);
+      } else {
+        console.log("🔧 Using Puppeteer's bundled Chromium");
+      }
+    }
+
     this.client = new Client({
       authStrategy: new LocalAuth(),
       puppeteer: {
         headless: true,
-        executablePath:
-          process.env.NODE_ENV === "production"
-            ? "/usr/bin/google-chrome-stable"
-            : undefined,
+        executablePath,
         args: [
           "--no-sandbox",
           "--disable-setuid-sandbox",
@@ -142,7 +162,7 @@ class WhatsAppClient {
       if (process.env.NODE_ENV === "production") {
         console.error("🔧 Production environment detected. Common issues:");
         console.error(
-          "   - Check if Chrome is available at /usr/bin/google-chrome-stable"
+          "   - Check if Chromium is available at /usr/bin/chromium-browser"
         );
         console.error("   - Verify sufficient memory (at least 512MB)");
         console.error("   - Check network connectivity to WhatsApp servers");
