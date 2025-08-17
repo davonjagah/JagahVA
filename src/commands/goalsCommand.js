@@ -57,6 +57,20 @@ class GoalsCommand {
     }
   }
 
+  static async updateProgress(msg, userId) {
+    const progressText = msg.body.slice(10).trim();
+    if (!progressText) {
+      return "Please provide goal numbers to mark as completed. Example: !progress 1, 2, 5";
+    }
+
+    try {
+      await goalService.updateProgressByNumbers(userId, progressText);
+      return "✅ Progress updated successfully! Use !today to see your updated tasks.";
+    } catch (error) {
+      return `❌ Error updating progress: ${error.message}`;
+    }
+  }
+
   static async getWeeklyProgress(msg, userId) {
     const weeklyGoals = await goalService.getWeeklyProgress(userId);
     

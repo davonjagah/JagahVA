@@ -20,8 +20,8 @@ class HelpCommand {
 
 📊 !weekprogress - View weekly progress for all goals
 
-📝 !progress <tasks> - Log your progress
-   Example: !progress I hit the gym, finished reading
+📝 !progress <numbers> - Mark goals as completed
+   Example: !progress 1, 2, 5
 
 📊 !stats - View your statistics
 ❓ !help - Show this help message

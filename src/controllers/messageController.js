@@ -34,7 +34,7 @@ class MessageController {
       } else if (msg.body === "!listgoals") {
         response = await GoalsCommand.listGoals(msg, userId);
       } else if (msg.body.startsWith("!progress")) {
-        response = await GoalsCommand.logProgress(msg, userId);
+        response = await GoalsCommand.updateProgress(msg, userId);
       } else if (msg.body === "!weekprogress") {
         response = await GoalsCommand.getWeeklyProgress(msg, userId);
       } else if (msg.body.startsWith("!addtask")) {
