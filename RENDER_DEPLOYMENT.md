@@ -25,7 +25,7 @@ ALLOWED_NUMBER=your-whatsapp-number@c.us
 PORT=10000
 ```
 
-**Optional**: If you encounter Chrome path issues, you can set a custom Chrome path:
+**Optional**: If you want to use system Chrome instead of Puppeteer's bundled Chromium:
 ```env
 CHROME_BIN=/usr/bin/chromium-browser
 ```
@@ -94,10 +94,10 @@ README.md
 ### Common Issues
 
 1. **Chrome/Chromium Not Found**
-   - Error: `spawn /usr/bin/google-chrome-stable ENOENT`
-   - **Solution**: The bot now automatically tries multiple Chrome paths
-   - **Alternative**: Set `CHROME_BIN` environment variable to correct path
-   - **Fallback**: Uses Puppeteer's bundled Chromium if no system Chrome found
+   - Error: `spawn /usr/bin/chromium-browser ENOENT`
+   - **Solution**: The bot now uses Puppeteer's bundled Chromium by default
+   - **Alternative**: Set `CHROME_BIN` environment variable to use system Chrome
+   - **Note**: No system Chrome installation required for basic deployment
 
 2. **Timeout Error**
    - Increase timeout in code (already done)
