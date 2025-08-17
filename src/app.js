@@ -17,18 +17,13 @@ class JagahVABot {
       // Initialize database
       await database.initialize();
 
-      // Initialize Telegram bot
-      const bot = telegramClient.createBot();
-
       // Setup Express server
       expressServer.setup();
       expressServer.start();
 
-      // Setup Telegram event handlers
-      telegramClient.setupEventHandlers(this.messageController);
-
-      // Initialize Telegram connection
+      // Initialize Telegram bot and setup handlers
       await telegramClient.initialize();
+      telegramClient.setupEventHandlers(this.messageController);
 
       this.isInitialized = true;
       console.log("✅ JagahVA Bot initialized successfully!");

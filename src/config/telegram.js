@@ -4,6 +4,7 @@ class TelegramClient {
   constructor() {
     this.bot = null;
     this.allowedUserId = null;
+    this.isInitialized = false;
   }
 
   createBot() {
@@ -121,6 +122,13 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
 
   async initialize() {
     try {
+      // Prevent multiple initializations
+      if (this.isInitialized) {
+        console.log("⚠️ Bot already initialized, skipping...");
+        return this.bot;
+      }
+
+      // Create bot only if it doesn't exist
       if (!this.bot) {
         this.createBot();
       }
@@ -134,6 +142,7 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
       console.log(`🆔 Bot username: @${me.username}`);
       console.log("📱 Bot is ready to receive messages!");
 
+      this.isInitialized = true;
       return this.bot;
     } catch (error) {
       console.error("❌ Telegram bot initialization failed:", error);
@@ -160,6 +169,7 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
       try {
         this.bot.stopPolling();
         console.log("🛑 Bot polling stopped");
+        this.isInitialized = false;
       } catch (error) {
         console.error("❌ Error stopping bot:", error);
       }
