@@ -2,31 +2,33 @@ class HelpCommand {
   static getHelpText() {
     return `🤖 JagahVA Bot Commands:
 
-🎯 !setgoals <goals> - Set your goals
-   Example: !setgoals workout 3 times a week, read daily
+🎯 GOALS & PROGRESS:
+   !setgoals <goals> - Set your goals
+      Example: !setgoals workout 3 times a week, read daily
+   !listgoals - List all your current goals
+   !progress <numbers> - Mark goals as completed
+      Example: !progress 1, 2, 5
+   !weekprogress - View weekly progress for all goals
 
-📅 !setday <day> <tasks> - Set day-specific tasks
-   Example: !setday Monday Gym, Team meeting
+📅 TASKS & SCHEDULING:
+   !today - Get today's task list
+   !tomorrow - Get tomorrow's task list
+   !addtask <task> - Add a one-time task for today
+      Example: !addtask Buy groceries
+   !complete <number> - Mark a specific task as done/undone
+      Example: !complete 1
 
-📅 !setdate <date> <tasks> - Set date-specific tasks
-   Example: !setdate 21 October 2025 Wish Eniola Happy Birthday
+📅 DAY & DATE TASKS:
+   !setday <day> <tasks> - Set day-specific tasks
+      Example: !setday Monday Gym, Team meeting
+   !setdate <date> <tasks> - Set date-specific tasks
+      Example: !setdate 21 October 2025 Wish Eniola Happy Birthday
 
-📅 !today - Get today's task list
-📅 !tomorrow - Get tomorrow's task list
+📊 OTHER:
+   !stats - View your statistics
+   !help - Show this help message
 
-🎯 !listgoals - List all your current goals
-📝 !addtask <task> - Add a one-time task for today
-✅ !complete <number> - Mark a specific task as done/undone
-
-📊 !weekprogress - View weekly progress for all goals
-
-📝 !progress <numbers> - Mark goals as completed
-   Example: !progress 1, 2, 5
-
-📊 !stats - View your statistics
-❓ !help - Show this help message
-
-Visit the web interface for detailed guidelines!`;
+🌐 Visit the web interface for detailed guidelines!`;
   }
 
   static async execute(msg) {

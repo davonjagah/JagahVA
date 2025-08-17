@@ -6,14 +6,14 @@ const TaskCommand = require("../commands/taskCommand");
 
 class MessageController {
   constructor() {
-    this.allowedNumber = process.env.ALLOWED_NUMBER;
+    this.allowedUserId = process.env.ALLOWED_USER_ID;
   }
 
   async handleMessage(msg) {
     const userId = msg.from;
 
-    // Check if message is from allowed number
-    if (this.allowedNumber && msg.from !== this.allowedNumber) {
+    // Check if message is from allowed user
+    if (this.allowedUserId && msg.from !== this.allowedUserId) {
       console.log("🚫 Unauthorized message from:", msg.from);
       return;
     }
