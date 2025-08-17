@@ -14,7 +14,15 @@ class TelegramClient {
       throw new Error("TELEGRAM_BOT_TOKEN environment variable is required");
     }
 
-    this.bot = new TelegramBot(token, { polling: true });
+    // Add more robust polling options to handle conflicts better
+    this.bot = new TelegramBot(token, {
+      polling: {
+        timeout: 10,
+        limit: 100,
+        retryTimeout: 5000,
+        autoStart: false, // Don't start polling immediately
+      },
+    });
     this.allowedUserId = process.env.ALLOWED_USER_ID;
 
     console.log("🤖 Telegram bot created successfully");
@@ -105,14 +113,15 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
             "🔧 If deploying to Render, ensure only one instance is running"
           );
 
-          // Wait 30 seconds before retrying
+          // Stop polling immediately and wait before retrying
+          console.log("🛑 Stopping polling due to conflict...");
+          this.bot.stopPolling();
+
+          // Wait 60 seconds before retrying (longer wait for conflicts)
           setTimeout(() => {
-            console.log("🔄 Retrying bot connection...");
-            this.bot.stopPolling();
-            setTimeout(() => {
-              this.bot.startPolling();
-            }, 5000);
-          }, 30000);
+            console.log("🔄 Retrying bot connection after conflict...");
+            this.bot.startPolling();
+          }, 60000);
         }
       }
     });
@@ -135,11 +144,26 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
 
       console.log("🔄 Initializing Telegram bot...");
 
-      // Test the bot connection
+      // Test the bot connection first
       const me = await this.bot.getMe();
-      console.log("✅ Telegram bot initialized successfully");
+      console.log("✅ Telegram bot connection test successful");
       console.log(`🤖 Bot name: ${me.first_name}`);
       console.log(`🆔 Bot username: @${me.username}`);
+
+      // Clear any existing webhook to ensure polling works
+      try {
+        await this.bot.deleteWebHook();
+        console.log("🧹 Cleared any existing webhook");
+      } catch (webhookError) {
+        console.log(
+          "ℹ️ No webhook to clear or error clearing webhook:",
+          webhookError.message
+        );
+      }
+
+      // Start polling manually
+      console.log("🔄 Starting bot polling...");
+      this.bot.startPolling();
       console.log("📱 Bot is ready to receive messages!");
 
       this.isInitialized = true;
