@@ -88,6 +88,32 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
     // Handle polling errors
     this.bot.on("polling_error", (error) => {
       console.error("❌ Telegram polling error:", error);
+
+      // Handle specific conflict error (multiple bot instances)
+      if (error.code === "ETELEGRAM" && error.response && error.response.body) {
+        const errorBody = error.response.body;
+        if (
+          errorBody.error_code === 409 &&
+          errorBody.description.includes("Conflict")
+        ) {
+          console.error("🚨 CONFLICT: Multiple bot instances detected!");
+          console.error(
+            "💡 Solution: Stop other bot instances or wait 5 minutes"
+          );
+          console.error(
+            "🔧 If deploying to Render, ensure only one instance is running"
+          );
+
+          // Wait 30 seconds before retrying
+          setTimeout(() => {
+            console.log("🔄 Retrying bot connection...");
+            this.bot.stopPolling();
+            setTimeout(() => {
+              this.bot.startPolling();
+            }, 5000);
+          }, 30000);
+        }
+      }
     });
 
     console.log("✅ Telegram event handlers set up successfully");
@@ -126,6 +152,17 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
     } catch (error) {
       console.error("❌ Error sending message:", error);
       throw error;
+    }
+  }
+
+  async stop() {
+    if (this.bot) {
+      try {
+        this.bot.stopPolling();
+        console.log("🛑 Bot polling stopped");
+      } catch (error) {
+        console.error("❌ Error stopping bot:", error);
+      }
     }
   }
 }

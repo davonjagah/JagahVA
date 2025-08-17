@@ -50,13 +50,23 @@ class JagahVABot {
 }
 
 // Handle graceful shutdown
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
   console.log("\n🛑 Shutting down JagahVA Bot...");
+  try {
+    await telegramClient.stop();
+  } catch (error) {
+    console.error("❌ Error during shutdown:", error);
+  }
   process.exit(0);
 });
 
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   console.log("\n🛑 Shutting down JagahVA Bot...");
+  try {
+    await telegramClient.stop();
+  } catch (error) {
+    console.error("❌ Error during shutdown:", error);
+  }
   process.exit(0);
 });
 
