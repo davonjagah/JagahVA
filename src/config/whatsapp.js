@@ -61,6 +61,17 @@ class WhatsAppClient {
     this.client.on("qr", (qr) => {
       console.log("🔐 Scan this QR code with WhatsApp:");
       qrcode.generate(qr, { small: true });
+
+      // Also generate data URL for web display
+      qrcode
+        .toDataURL(qr, { width: 256, margin: 1 })
+        .then((dataUrl) => {
+          console.log("\n🌐 Copy this URL for web display:");
+          console.log(dataUrl);
+        })
+        .catch((err) => {
+          console.error("❌ Error generating data URL:", err);
+        });
     });
 
     this.client.on("ready", () => {
