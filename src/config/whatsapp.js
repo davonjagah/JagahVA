@@ -72,42 +72,10 @@ class WhatsAppClient {
         // Store QR code for web display
         this.qrCode = qr;
 
-        // Generate QR code as data URL for better visibility
+        // Simple QR code generation - no fancy stuff
+        console.log("\n📱 QR Code:");
         const qrcode = require("qrcode");
-        console.log("\n📱 Generating QR code for scanning...");
-
-        // Generate data URL synchronously for reliability
-        qrcode
-          .toDataURL(qr, {
-            width: 256,
-            margin: 1,
-            color: {
-              dark: "#000000",
-              light: "#FFFFFF",
-            },
-          })
-          .then((dataUrl) => {
-            console.log(
-              "\n🌐 Copy this URL and paste in your browser to view QR code:"
-            );
-            console.log(dataUrl);
-            console.log("\n🌐 Or visit this web page for better display:");
-            console.log("   https://jagahva.onrender.com/qr");
-            console.log("\n📱 Instructions:");
-            console.log("1. Copy the data URL above OR visit the web page");
-            console.log("2. The QR code will display as a clear image");
-            console.log("3. Scan it with WhatsApp");
-          })
-          .catch((err) => {
-            console.error("❌ Error generating QR code:", err);
-            // Fallback to console QR code
-            try {
-              console.log("\n📱 Fallback QR code (may be distorted in logs):");
-              qrcode.generate(qr, { small: true });
-            } catch (error) {
-              console.error("❌ Error generating fallback QR code:", error);
-            }
-          });
+        qrcode.generate(qr, { small: true });
 
         console.log("\n⏳ Waiting for you to scan the QR code...");
         console.log(
