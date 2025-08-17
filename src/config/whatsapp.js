@@ -69,8 +69,10 @@ class WhatsAppClient {
           "📱 Open WhatsApp → Settings → Linked Devices → Link a Device"
         );
 
-        // Generate QR code data URL
+                // Generate QR code data URL
         const qrcode = require("qrcode");
+        console.log("🔄 Generating QR code data URL...");
+        
         qrcode.toDataURL(
           qr,
           {
@@ -91,6 +93,7 @@ class WhatsAppClient {
                 console.error("❌ Error generating QR code:", error);
               }
             } else {
+              console.log("✅ QR code data URL generated successfully!");
               console.log(
                 "\n🌐 Copy and paste this URL in your browser to view QR code:"
               );
@@ -102,7 +105,7 @@ class WhatsAppClient {
                 console.error("❌ Error generating console QR code:", error);
               }
             }
-
+ 
             console.log("\n⏳ Waiting for you to scan the QR code...");
             console.log(
               "💡 Make sure your phone and computer are on the same network"
