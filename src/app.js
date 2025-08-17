@@ -1,6 +1,6 @@
 require("dotenv").config();
 const database = require("./config/database");
-const whatsappClient = require("./config/whatsapp");
+const telegramClient = require("./config/telegram");
 const expressServer = require("./config/express");
 const MessageController = require("./controllers/messageController");
 
@@ -17,20 +17,18 @@ class JagahVABot {
       // Initialize database
       await database.initialize();
 
-      // Initialize WhatsApp client
-      const client = whatsappClient.createClient();
+      // Initialize Telegram bot
+      const bot = telegramClient.createBot();
 
       // Setup Express server
       expressServer.setup();
       expressServer.start();
 
-      // Setup message handler
-      client.on("message", async (msg) => {
-        await this.messageController.handleMessage(msg);
-      });
+      // Setup Telegram event handlers
+      telegramClient.setupEventHandlers(this.messageController);
 
-      // Initialize WhatsApp connection
-      await whatsappClient.initialize();
+      // Initialize Telegram connection
+      await telegramClient.initialize();
 
       this.isInitialized = true;
       console.log("✅ JagahVA Bot initialized successfully!");
@@ -46,7 +44,7 @@ class JagahVABot {
     }
 
     console.log("🤖 JagahVA Bot is running!");
-    console.log("📱 Send !help to see available commands");
+    console.log("📱 Send /start or !help to see available commands");
     console.log("🌐 Web interface: http://localhost:3000");
   }
 }

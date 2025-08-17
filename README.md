@@ -1,8 +1,8 @@
 # JagahVA 🤖
 
-**Transform your WhatsApp into a personal productivity assistant!**
+**Transform your Telegram into a personal productivity assistant!**
 
-JagahVA is an open-source WhatsApp bot that helps you set goals, track daily tasks, mark progress with simple numbers, and get intelligent reminders—all through simple WhatsApp commands. Perfect for personal productivity and habit tracking.
+JagahVA is an open-source Telegram bot that helps you set goals, track daily tasks, mark progress with simple numbers, and get intelligent reminders—all through simple Telegram commands. Perfect for personal productivity and habit tracking.
 
 ## ✨ Features
 
@@ -20,7 +20,8 @@ JagahVA is an open-source WhatsApp bot that helps you set goals, track daily tas
 ### Prerequisites
 
 - Node.js 18+ installed
-- WhatsApp account
+- Telegram account
+- Telegram Bot Token (from @BotFather)
 
 ### Installation
 
@@ -38,7 +39,7 @@ JagahVA is an open-source WhatsApp bot that helps you set goals, track daily tas
 3. **Configure environment variables**
    ```bash
    cp env.example .env
-   # Edit .env with your allowed WhatsApp number
+   # Edit .env with your Telegram bot token and user ID
    ```
 
 4. **Run the bot**
@@ -46,9 +47,9 @@ JagahVA is an open-source WhatsApp bot that helps you set goals, track daily tas
    npm start
    ```
 
-5. **Authenticate with WhatsApp**
-   - Scan the QR code with your WhatsApp
-   - Send `!help` to test the bot
+5. **Start using the bot**
+   - Send `/start` to your bot on Telegram
+   - Send `!help` to see all commands
 
 ## 📁 Project Structure
 
@@ -114,8 +115,11 @@ See `src/README.md` for detailed architecture documentation.
 Create a `.env` file with the following variables:
 
 ```env
-# Required: Your WhatsApp number (with country code)
-ALLOWED_NUMBER=233578588981@c.us
+# Required: Your Telegram Bot Token (from @BotFather)
+TELEGRAM_BOT_TOKEN=your-bot-token-here
+
+# Required: Your Telegram User ID (from @userinfobot)
+ALLOWED_USER_ID=your-user-id-here
 
 # Optional: Web server port (default: 3000)
 PORT=3000
@@ -167,7 +171,7 @@ JagahVA/
 
 ### Key Features Implementation
 
-- **WhatsApp Integration**: Uses `whatsapp-web.js` for WhatsApp Web API
+- **Telegram Integration**: Uses `node-telegram-bot-api` for Telegram Bot API
 - **Smart Goal Parsing**: Regex-based goal parsing with numeric progress tracking
 - **Local Database**: Uses `lowdb` for JSON-based local storage
 - **Modular Architecture**: Clean separation of concerns
@@ -192,10 +196,10 @@ JagahVA/
 
 ### Common Issues
 
-**QR Code Not Working**
-- Ensure WhatsApp is up to date
-- Try logging out and back in
-- Check internet connection
+**Bot Not Responding**
+- Ensure bot token is correct
+- Check if user ID is properly set
+- Verify bot is running and connected
 
 **Date Parsing Issues**
 - Check date format (DD Month YYYY)
@@ -232,7 +236,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) for WhatsApp integration
+- [node-telegram-bot-api](https://github.com/yagop/node-telegram-bot-api) for Telegram integration
 - [lowdb](https://github.com/typicode/lowdb) for local database
 - [date-fns](https://date-fns.org/) for date manipulation
 - [Express.js](https://expressjs.com/) for web server
