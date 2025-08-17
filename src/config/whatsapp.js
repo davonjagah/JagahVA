@@ -69,50 +69,20 @@ class WhatsAppClient {
           "📱 Open WhatsApp → Settings → Linked Devices → Link a Device"
         );
 
-                // Generate QR code data URL
+                // Generate QR code in console
         const qrcode = require("qrcode");
-        console.log("🔄 Generating QR code data URL...");
+        console.log("\n📱 Scan this QR code with WhatsApp:");
+        try {
+          qrcode.generate(qr, { small: true });
+        } catch (error) {
+          console.error("❌ Error generating QR code:", error);
+        }
         
-        qrcode.toDataURL(
-          qr,
-          {
-            width: 300,
-            margin: 2,
-            color: {
-              dark: "#000000",
-              light: "#FFFFFF",
-            },
-          },
-          (err, dataUrl) => {
-            if (err) {
-              console.error("❌ Error generating QR code data URL:", err);
-              // Fallback to console QR code
-              try {
-                qrcode.generate(qr, { small: true });
-              } catch (error) {
-                console.error("❌ Error generating QR code:", error);
-              }
-            } else {
-              console.log("✅ QR code data URL generated successfully!");
-              console.log(
-                "\n🌐 Copy and paste this URL in your browser to view QR code:"
-              );
-              console.log("   " + dataUrl);
-              console.log("\n📱 Or scan this QR code in console:");
-              try {
-                qrcode.generate(qr, { small: true });
-              } catch (error) {
-                console.error("❌ Error generating console QR code:", error);
-              }
-            }
- 
-            console.log("\n⏳ Waiting for you to scan the QR code...");
-            console.log(
-              "💡 Make sure your phone and computer are on the same network"
-            );
-            qrDisplayed = true;
-          }
+        console.log("\n⏳ Waiting for you to scan the QR code...");
+        console.log(
+          "💡 Make sure your phone and computer are on the same network"
         );
+        qrDisplayed = true;
       }
     });
 
