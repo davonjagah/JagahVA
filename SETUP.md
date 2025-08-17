@@ -68,7 +68,7 @@ Should show: "🎉 All tests passed!"
    !help
    !setgoals Workout 4 times a week. Pray every day.
    !today
-   !progress I hit the gym
+   !progress 1, 2
    !stats
    ```
 
@@ -125,7 +125,7 @@ jagahva/
 ✅ **Commands**
 - `!setgoals` - Set goals with natural language
 - `!today` - Get daily task list
-- `!progress` - Log progress
+- `!progress` - Mark goals as completed
 - `!edittodo` - Edit tasks
 - `!stats` - View statistics
 - `!help` - Show help

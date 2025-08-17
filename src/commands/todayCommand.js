@@ -20,7 +20,7 @@ class TodayCommand {
         taskText += ` - ${t.completed ? "✅ Done" : "⏳ Pending"}`;
         return taskText;
       })
-      .join("\n")}\n\nUse !progress <tasks> to log your progress.`;
+      .join("\n")}\n\nUse !progress <numbers> to mark goals as completed.`;
 
     return response;
   }

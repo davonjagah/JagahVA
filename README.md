@@ -2,13 +2,13 @@
 
 **Transform your WhatsApp into a personal productivity assistant!**
 
-JagahVA is an open-source WhatsApp bot that helps you set goals, track daily tasks, log progress, and get intelligent reminders—all through simple WhatsApp commands. Perfect for personal productivity and habit tracking.
+JagahVA is an open-source WhatsApp bot that helps you set goals, track daily tasks, mark progress with simple numbers, and get intelligent reminders—all through simple WhatsApp commands. Perfect for personal productivity and habit tracking.
 
 ## ✨ Features
 
 - 🎯 **Smart Goal Setting**: Set goals with natural language parsing
 - 📅 **Daily Task Management**: Get curated daily task lists
-- 📝 **Progress Tracking**: Log your progress with simple commands
+- 📝 **Progress Tracking**: Mark goals as completed with simple numbers
 - 📊 **Analytics**: View your productivity statistics and streaks
 - 📅 **Date & Day Tasks**: Set tasks for specific dates and days of the week
 - 🔄 **Weekly Tracking**: Track weekly goals with Sunday as week start
@@ -89,7 +89,7 @@ See `src/README.md` for detailed architecture documentation.
 ```
 !addtask Buy groceries          # Add one-time task
 !complete 1                     # Mark task as done/undone
-!progress I hit the gym         # Log progress
+!progress 1, 2, 5              # Mark goals as completed (by number)
 ```
 
 ### Tracking Progress
@@ -97,6 +97,14 @@ See `src/README.md` for detailed architecture documentation.
 !weekprogress                   # Weekly progress for all goals
 !stats                         # View statistics
 !help                          # Show all commands
+```
+
+### Progress Tracking Examples
+```
+!setgoals workout 3 times a week, read daily, pray everyday
+!progress 1, 2                 # Mark goals 1 and 2 as completed today
+!progress 1 2 3                # Mark goals 1, 2, and 3 as completed today
+!progress 5                    # Mark only goal 5 as completed today
 ```
 
 ## 🔧 Configuration
@@ -160,7 +168,7 @@ JagahVA/
 ### Key Features Implementation
 
 - **WhatsApp Integration**: Uses `whatsapp-web.js` for WhatsApp Web API
-- **Natural Language Parsing**: Regex-based goal and progress parsing
+- **Smart Goal Parsing**: Regex-based goal parsing with numeric progress tracking
 - **Local Database**: Uses `lowdb` for JSON-based local storage
 - **Modular Architecture**: Clean separation of concerns
 - **Date Handling**: Uses `date-fns` for date manipulation
