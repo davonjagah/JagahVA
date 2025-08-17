@@ -11,6 +11,10 @@ class WhatsAppClient {
       authStrategy: new LocalAuth(),
       puppeteer: {
         headless: true,
+        executablePath:
+          process.env.NODE_ENV === "production"
+            ? "/usr/bin/google-chrome-stable"
+            : undefined,
         args: [
           "--no-sandbox",
           "--disable-setuid-sandbox",
@@ -29,6 +33,8 @@ class WhatsAppClient {
           "--disable-renderer-backgrounding",
           "--disable-features=TranslateUI",
           "--disable-ipc-flooding-protection",
+          "--memory-pressure-off",
+          "--max_old_space_size=4096",
         ],
       },
     });
@@ -108,18 +114,40 @@ class WhatsAppClient {
       if (!this.client) {
         this.createClient();
       }
-      
-      // Add timeout for initialization
+
+      // Add timeout for initialization (longer for production)
+      const timeoutDuration =
+        process.env.NODE_ENV === "production" ? 180000 : 60000; // 3 minutes for production, 1 minute for dev
       const timeout = setTimeout(() => {
-        console.error("❌ WhatsApp initialization timeout. Please restart the bot.");
+        console.error(
+          `❌ WhatsApp initialization timeout after ${
+            timeoutDuration / 1000
+          } seconds. Please restart the bot.`
+        );
         process.exit(1);
-      }, 60000); // 60 seconds timeout
-      
+      }, timeoutDuration);
+
+      console.log(
+        `🔄 Initializing WhatsApp client (timeout: ${
+          timeoutDuration / 1000
+        }s)...`
+      );
       await this.client.initialize();
       clearTimeout(timeout);
       console.log("✅ WhatsApp client initialized successfully");
     } catch (error) {
       console.error("❌ WhatsApp client initialization failed:", error);
+
+      // Production-specific error handling
+      if (process.env.NODE_ENV === "production") {
+        console.error("🔧 Production environment detected. Common issues:");
+        console.error(
+          "   - Check if Chrome is available at /usr/bin/google-chrome-stable"
+        );
+        console.error("   - Verify sufficient memory (at least 512MB)");
+        console.error("   - Check network connectivity to WhatsApp servers");
+      }
+
       throw error;
     }
   }
