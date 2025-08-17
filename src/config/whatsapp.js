@@ -59,30 +59,8 @@ class WhatsAppClient {
     let qrDisplayed = false;
 
     this.client.on("qr", (qr) => {
-      if (!qrDisplayed) {
-        // Clear console for better QR code visibility
-        console.clear();
-        console.log("🚀 JagahVA Bot - WhatsApp Connection");
-        console.log("=====================================");
-        console.log("\n🔐 QR Code received, scan it with your WhatsApp:");
-        console.log(
-          "📱 Open WhatsApp → Settings → Linked Devices → Link a Device"
-        );
-
-        // Store QR code for web display
-        this.qrCode = qr;
-
-        // Simple QR code generation - no fancy stuff
-        console.log("\n📱 QR Code:");
-        const qrcode = require("qrcode");
-        qrcode.generate(qr, { small: true });
-
-        console.log("\n⏳ Waiting for you to scan the QR code...");
-        console.log(
-          "💡 Make sure your phone and computer are on the same network"
-        );
-        qrDisplayed = true;
-      }
+      console.log("🔐 Scan this QR code with WhatsApp:");
+      qrcode.generate(qr, { small: true });
     });
 
     this.client.on("ready", () => {
