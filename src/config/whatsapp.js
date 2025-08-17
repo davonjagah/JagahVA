@@ -69,19 +69,42 @@ class WhatsAppClient {
           "📱 Open WhatsApp → Settings → Linked Devices → Link a Device"
         );
 
-        // Store QR code for web display
-        this.qrCode = qr;
-        this.qrGenerated = true;
+        // Generate QR code data URL
+        const qrcode = require("qrcode");
+        qrcode.toDataURL(
+          qr,
+          {
+            width: 300,
+            margin: 2,
+            color: {
+              dark: "#000000",
+              light: "#FFFFFF",
+            },
+          },
+          (err, dataUrl) => {
+            if (err) {
+              console.error("❌ Error generating QR code data URL:", err);
+              // Fallback to console QR code
+              try {
+                qrcode.generate(qr, { small: true });
+              } catch (error) {
+                console.error("❌ Error generating QR code:", error);
+              }
+            } else {
+              console.log(
+                "\n🌐 Copy and paste this URL in your browser to view QR code:"
+              );
+              console.log("   " + dataUrl);
+              console.log("\n📱 Or scan this QR code in console:");
+              try {
+                qrcode.generate(qr, { small: true });
+              } catch (error) {
+                console.error("❌ Error generating console QR code:", error);
+              }
+            }
+          }
+        );
 
-        // Show QR code in console (may be truncated in Render logs)
-        try {
-          qrcode.generate(qr, { small: true });
-        } catch (error) {
-          console.error("❌ Error generating QR code:", error);
-        }
-
-        console.log("\n🌐 For better QR code visibility, visit:");
-        console.log("   https://your-app-name.onrender.com/qr");
         console.log("\n⏳ Waiting for you to scan the QR code...");
         console.log(
           "💡 Make sure your phone and computer are on the same network"
@@ -94,10 +117,6 @@ class WhatsAppClient {
       console.log("✅ WhatsApp client is ready!");
       console.log("🤖 Bot is now connected and ready to receive messages!");
       qrDisplayed = false; // Reset for future reconnections
-
-      // Clear QR code data when connected
-      this.qrCode = null;
-      this.qrGenerated = false;
     });
 
     this.client.on("authenticated", () => {
