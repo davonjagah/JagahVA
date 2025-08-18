@@ -11,7 +11,9 @@ class GoalsCommand {
 
     try {
       const goals = await goalService.setGoals(userId, goalsText);
-      return `✅ Goals set successfully!\n\n${goals.map((g, i) => `${i + 1}. ${g.task} (${g.frequency}: ${g.count}x)`).join("\n")}\n\nUse !today to see your tasks.`;
+      return `✅ Goals set successfully!\n\n${goals
+        .map((g, i) => `${i + 1}. ${g.task} (${g.frequency}: ${g.count}x)`)
+        .join("\n")}\n\nUse !today to see your tasks.`;
     } catch (error) {
       return `❌ Error setting goals: ${error.message}`;
     }
@@ -19,19 +21,20 @@ class GoalsCommand {
 
   static async listGoals(msg, userId) {
     const goals = await goalService.getGoals(userId);
-    
+
     if (goals.length === 0) {
       return "No goals set yet. Use !setgoals to get started!";
     }
 
     let response = `🎯 Your Current Goals:\n\n`;
-    
+
     goals.forEach((goal, index) => {
-      const totalProgress = goal.progress?.filter(p => p.done).length || 0;
-      const weeklyProgress = goal.progress?.filter(p => 
-        DateUtils.isInCurrentWeek(new Date(p.date)) && p.done
-      ).length || 0;
-      
+      const totalProgress = goal.progress?.filter((p) => p.done).length || 0;
+      const weeklyProgress =
+        goal.progress?.filter(
+          (p) => DateUtils.isInCurrentWeek(new Date(p.date)) && p.done
+        ).length || 0;
+
       response += `${index + 1}. ${goal.task}\n`;
       response += `   📊 ${goal.frequency}: ${goal.count}x`;
       if (goal.frequency === "weekly") {
@@ -58,7 +61,8 @@ class GoalsCommand {
   }
 
   static async updateProgress(msg, userId) {
-    const progressText = msg.body.slice(10).trim();
+    // Extract everything after "!progress" command
+    const progressText = msg.body.replace(/^!progress\s*/i, "").trim();
     if (!progressText) {
       return "Please provide goal numbers to mark as completed. Example: !progress 1, 2, 5";
     }
@@ -73,13 +77,15 @@ class GoalsCommand {
 
   static async getWeeklyProgress(msg, userId) {
     const weeklyGoals = await goalService.getWeeklyProgress(userId);
-    
+
     if (weeklyGoals.length === 0) {
       return "No weekly goals set. Use !setgoals to get started!";
     }
 
-    let response = `📊 Weekly Progress (${DateUtils.formatDateReadable(DateUtils.getCurrentWeekStart())} - ${DateUtils.formatDateReadable(DateUtils.getCurrentWeekEnd())}):\n\n`;
-    
+    let response = `📊 Weekly Progress (${DateUtils.formatDateReadable(
+      DateUtils.getCurrentWeekStart()
+    )} - ${DateUtils.formatDateReadable(DateUtils.getCurrentWeekEnd())}):\n\n`;
+
     weeklyGoals.forEach((goal, index) => {
       const progressBar = this.createProgressBar(goal.percentage);
       response += `${index + 1}. ${goal.task}\n`;
@@ -97,4 +103,4 @@ class GoalsCommand {
   }
 }
 
-module.exports = GoalsCommand; 
+module.exports = GoalsCommand;
