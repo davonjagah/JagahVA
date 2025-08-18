@@ -100,17 +100,26 @@ class GoalService {
 
   async updateProgressByNumbers(userId, progressText) {
     try {
+      console.log(
+        "🔍 Debug: progressText received:",
+        JSON.stringify(progressText)
+      );
+
       const user = await database.getUser(userId);
 
       if (!user || !user.goals || user.goals.length === 0) {
         throw new Error("No goals set. Use !setgoals first.");
       }
 
+      console.log("🔍 Debug: user has", user.goals.length, "goals");
+
       // Parse the numbers from the input (e.g., "1, 2, 5" -> [1, 2, 5])
       const numbers = progressText
         .split(",")
         .map((num) => parseInt(num.trim()))
         .filter((num) => !isNaN(num) && num > 0);
+
+      console.log("🔍 Debug: parsed numbers:", numbers);
 
       if (numbers.length === 0) {
         throw new Error("Please provide valid goal numbers (e.g., 1, 2, 5)");
@@ -143,10 +152,23 @@ class GoalService {
             });
             updatedCount++;
           }
+        } else {
+          console.log(
+            `⚠️ Goal number ${goalNumber} is out of range. User has ${user.goals.length} goals (1-${user.goals.length})`
+          );
         }
       }
 
       if (updatedCount === 0) {
+        // Check if any goals were out of range
+        const outOfRangeGoals = numbers.filter(
+          (num) => num - 1 >= user.goals.length
+        );
+        if (outOfRangeGoals.length > 0) {
+          return `❌ Invalid goal numbers: ${outOfRangeGoals.join(
+            ", "
+          )}. You have ${user.goals.length} goals (1-${user.goals.length}).`;
+        }
         return "ℹ️ All specified goals were already completed today.";
       }
 

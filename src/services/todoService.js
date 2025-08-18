@@ -152,6 +152,45 @@ class TodoService {
     user.dateTasks[dateKey] = tasks;
     await database.saveUser(userId, user);
   }
+
+  async updateTasksByNumbers(userId, taskNumbers) {
+    const today = DateUtils.formatDate(new Date());
+    const user = await database.getUser(userId);
+    const todos = user?.todos?.[today] || [];
+
+    if (todos.length === 0) {
+      throw new Error("No tasks found for today.");
+    }
+
+    const updatedTasks = [];
+
+    for (const taskNumber of taskNumbers) {
+      const taskIndex = taskNumber - 1; // Convert to 0-based index
+
+      if (taskIndex >= 0 && taskIndex < todos.length) {
+        const task = todos[taskIndex];
+        task.completed = true; // Mark as completed
+        updatedTasks.push(taskNumber);
+      } else {
+        console.log(
+          `⚠️ Task number ${taskNumber} is out of range. Available tasks: 1-${todos.length}`
+        );
+      }
+    }
+
+    if (updatedTasks.length === 0) {
+      throw new Error(
+        `No valid task numbers found. Available tasks: 1-${todos.length}`
+      );
+    }
+
+    await database.saveUser(userId, user);
+    console.log(
+      `✅ Tasks updated for user: ${userId}, tasks: ${updatedTasks.join(", ")}`
+    );
+
+    return updatedTasks;
+  }
 }
 
 module.exports = new TodoService();

@@ -61,15 +61,64 @@ class GoalsCommand {
   }
 
   static async updateProgress(msg, userId) {
+    console.log("🔍 Debug: Original message body:", JSON.stringify(msg.body));
+
     // Extract everything after "!progress" command
     const progressText = msg.body.replace(/^!progress\s*/i, "").trim();
+    console.log(
+      "🔍 Debug: Extracted progressText:",
+      JSON.stringify(progressText)
+    );
+
     if (!progressText) {
-      return "Please provide goal numbers to mark as completed. Example: !progress 1, 2, 5";
+      return "Please provide numbers to mark as completed. Example: !progress 1, 2, 5";
     }
 
     try {
-      await goalService.updateProgressByNumbers(userId, progressText);
-      return "✅ Progress updated successfully! Use !today to see your updated tasks.";
+      // Parse the numbers from the input (e.g., "1, 2, 5" -> [1, 2, 5])
+      const numbers = progressText
+        .split(",")
+        .map((num) => parseInt(num.trim()))
+        .filter((num) => !isNaN(num) && num > 0);
+
+      if (numbers.length === 0) {
+        return "Please provide valid numbers (e.g., 1, 2, 5)";
+      }
+
+      // First try to update goals
+      let goalResults = [];
+      try {
+        goalResults = await goalService.updateProgressByNumbers(
+          userId,
+          progressText
+        );
+      } catch (goalError) {
+        console.log("No goals to update or goal error:", goalError.message);
+      }
+
+      // Then try to update tasks
+      let taskResults = [];
+      try {
+        taskResults = await todoService.updateTasksByNumbers(userId, numbers);
+      } catch (taskError) {
+        console.log("No tasks to update or task error:", taskError.message);
+      }
+
+      // Build response message
+      let response = "";
+      if (goalResults && goalResults.length > 0) {
+        response += `✅ Goals updated: ${goalResults.join(", ")}\n`;
+      }
+      if (taskResults && taskResults.length > 0) {
+        response += `✅ Tasks updated: ${taskResults.join(", ")}\n`;
+      }
+
+      if (!goalResults && !taskResults) {
+        return "ℹ️ No goals or tasks found to update.";
+      }
+
+      response += "\nUse !today to see your updated tasks.";
+      return response;
     } catch (error) {
       return `❌ Error updating progress: ${error.message}`;
     }
