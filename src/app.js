@@ -17,6 +17,19 @@ class JagahVABot {
       // Initialize database
       await database.initialize();
 
+      // Set up MongoDB connection notification
+      database.onConnect(async () => {
+        try {
+          const allowedUserId = process.env.ALLOWED_USER_ID;
+          if (allowedUserId) {
+            await this.messageController.sendReadyMessage(allowedUserId);
+            console.log("✅ Ready message sent to user");
+          }
+        } catch (error) {
+          console.log("⚠️ Could not send ready message:", error.message);
+        }
+      });
+
       // Setup Express server
       expressServer.setup();
       expressServer.messageController = this.messageController; // Pass message controller
@@ -42,6 +55,24 @@ class JagahVABot {
     console.log("🤖 JagahVA Bot is running!");
     console.log("📱 Send /start or !help to see available commands");
     console.log("🌐 Web interface: http://localhost:3000");
+
+    // Fallback ready message for local development
+    if (process.env.NODE_ENV !== "production") {
+      setTimeout(async () => {
+        try {
+          const allowedUserId = process.env.ALLOWED_USER_ID;
+          if (allowedUserId) {
+            await this.messageController.sendReadyMessage(allowedUserId);
+            console.log("✅ Fallback ready message sent to user");
+          }
+        } catch (error) {
+          console.log(
+            "⚠️ Could not send fallback ready message:",
+            error.message
+          );
+        }
+      }, 3000); // Wait 3 seconds to ensure everything is initialized
+    }
   }
 }
 

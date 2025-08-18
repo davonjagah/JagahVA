@@ -6,6 +6,11 @@ class Database {
     this.db = null;
     this.collection = null;
     this.isConnected = false;
+    this.onConnectCallback = null;
+  }
+
+  onConnect(callback) {
+    this.onConnectCallback = callback;
   }
 
   async initialize() {
@@ -21,10 +26,7 @@ class Database {
 
       console.log("🔄 Connecting to MongoDB Atlas...");
 
-      this.client = new MongoClient(mongoUri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+      this.client = new MongoClient(mongoUri);
 
       await this.client.connect();
       this.db = this.client.db("jagahva");
@@ -35,6 +37,11 @@ class Database {
 
       // Create indexes for better performance
       await this.collection.createIndex({ userId: 1 }, { unique: true });
+
+      // Notify connection success
+      if (this.onConnectCallback) {
+        this.onConnectCallback();
+      }
     } catch (error) {
       console.error("❌ MongoDB connection failed:", error);
       console.log("🔄 Falling back to local file storage...");
@@ -56,9 +63,12 @@ class Database {
 
   async getUser(userId) {
     if (this.isConnected) {
+      console.log(`🔍 Getting user data for: ${userId}`);
       const user = await this.collection.findOne({ userId });
+      console.log(`📊 User data found:`, user ? "Yes" : "No");
       return user?.data || { goals: [], todos: {}, stats: {} };
     } else {
+      console.log(`🔍 Getting local user data for: ${userId}`);
       return (
         this.db?.data?.users[userId] || { goals: [], todos: {}, stats: {} }
       );
@@ -67,17 +77,22 @@ class Database {
 
   async saveUser(userId, userData) {
     if (this.isConnected) {
+      console.log(`💾 Saving user data for: ${userId}`);
+      console.log(`📝 Data to save:`, JSON.stringify(userData, null, 2));
       await this.collection.updateOne(
         { userId },
         { $set: { userId, data: userData } },
         { upsert: true }
       );
+      console.log(`✅ User data saved successfully for: ${userId}`);
     } else {
+      console.log(`💾 Saving local user data for: ${userId}`);
       if (!this.db.data.users[userId]) {
         this.db.data.users[userId] = {};
       }
       this.db.data.users[userId] = userData;
       await this.db.write();
+      console.log(`✅ Local user data saved successfully for: ${userId}`);
     }
   }
 

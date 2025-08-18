@@ -153,10 +153,13 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
       // Check if we should use webhooks (for production on Render)
       if (
         process.env.NODE_ENV === "production" &&
-        process.env.RENDER_EXTERNAL_URL
+        process.env.RENDER_EXTERNAL_URL &&
+        process.env.RENDER_EXTERNAL_URL.includes("onrender.com")
       ) {
+        console.log("🌐 Using webhook mode for Render deployment");
         await this.setupWebhook();
       } else {
+        console.log("🔄 Using polling mode for local development");
         await this.setupPolling();
       }
 
@@ -198,7 +201,14 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
     // Start polling manually
     console.log("🔄 Starting bot polling...");
     this.bot.startPolling();
-    console.log("📱 Bot is ready to receive messages!");
+    console.log("📱 Bot is ready to receive messages via polling!");
+
+    // Test polling is working
+    setTimeout(() => {
+      console.log(
+        "🔍 Polling status check - bot should be listening for messages"
+      );
+    }, 2000);
   }
 
   async sendMessage(chatId, text) {

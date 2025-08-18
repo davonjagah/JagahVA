@@ -3,10 +3,35 @@ const TodayCommand = require("../commands/todayCommand");
 const TomorrowCommand = require("../commands/tomorrowCommand");
 const GoalsCommand = require("../commands/goalsCommand");
 const TaskCommand = require("../commands/taskCommand");
+const telegramClient = require("../config/telegram");
 
 class MessageController {
   constructor() {
     this.allowedUserId = process.env.ALLOWED_USER_ID;
+  }
+
+  async sendReadyMessage(userId) {
+    try {
+      const readyMessage = `🚀 **JagahVA Bot is Ready!**
+
+✅ MongoDB Atlas connected
+✅ Database initialized
+✅ Bot is listening for messages
+
+📱 **Quick Start:**
+• Send \`/start\` to begin
+• Send \`!help\` to see all commands
+• Send \`!setgoals workout 3 times a week, read daily\` to set your first goals
+
+🗄️ **Database Status:** MongoDB Atlas (persistent storage)
+🌐 **Web Interface:** http://localhost:3000
+
+*Your productivity assistant is ready to help! 🎯*`;
+
+      await telegramClient.sendMessage(userId, readyMessage);
+    } catch (error) {
+      console.error("❌ Error sending ready message:", error);
+    }
   }
 
   async handleMessage(msg) {
