@@ -86,7 +86,7 @@ class GoalsCommand {
       }
 
       // First try to update goals
-      let goalResults = [];
+      let goalResults = null;
       try {
         goalResults = await goalService.updateProgressByNumbers(
           userId,
@@ -97,7 +97,7 @@ class GoalsCommand {
       }
 
       // Then try to update tasks
-      let taskResults = [];
+      let taskResults = null;
       try {
         taskResults = await todoService.updateTasksByNumbers(userId, numbers);
       } catch (taskError) {
@@ -106,10 +106,10 @@ class GoalsCommand {
 
       // Build response message
       let response = "";
-      if (goalResults && goalResults.length > 0) {
-        response += `✅ Goals updated: ${goalResults.join(", ")}\n`;
+      if (goalResults && typeof goalResults === "number" && goalResults > 0) {
+        response += `✅ Goals updated: ${goalResults} goal(s)\n`;
       }
-      if (taskResults && taskResults.length > 0) {
+      if (taskResults && Array.isArray(taskResults) && taskResults.length > 0) {
         response += `✅ Tasks updated: ${taskResults.join(", ")}\n`;
       }
 
