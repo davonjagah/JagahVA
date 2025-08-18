@@ -156,9 +156,12 @@ class TodoService {
   async updateTasksByNumbers(userId, taskNumbers) {
     const today = DateUtils.formatDate(new Date());
     const user = await database.getUser(userId);
+
+    // Get all todos for today (including goals and tasks)
+    const allTodos = await this.generateTodos(userId, new Date());
     const todos = user?.todos?.[today] || [];
 
-    if (todos.length === 0) {
+    if (allTodos.length === 0) {
       throw new Error("No tasks found for today.");
     }
 
@@ -167,26 +170,55 @@ class TodoService {
     for (const taskNumber of taskNumbers) {
       const taskIndex = taskNumber - 1; // Convert to 0-based index
 
-      if (taskIndex >= 0 && taskIndex < todos.length) {
-        const task = todos[taskIndex];
-        task.completed = true; // Mark as completed
-        updatedTasks.push(taskNumber);
+      if (taskIndex >= 0 && taskIndex < allTodos.length) {
+        const todo = allTodos[taskIndex];
+
+        if (todo.type === "goal") {
+          // This is a goal, update it in the goals array
+          const goalIndex = user.goals.findIndex((g) => g.task === todo.task);
+          if (goalIndex >= 0) {
+            if (!user.goals[goalIndex].progress) {
+              user.goals[goalIndex].progress = [];
+            }
+
+            const today = DateUtils.formatDate(new Date());
+            const alreadyLogged = user.goals[goalIndex].progress.some(
+              (p) => p.date === today && p.done
+            );
+
+            if (!alreadyLogged) {
+              user.goals[goalIndex].progress.push({
+                task: todo.task,
+                done: true,
+                date: today,
+              });
+              updatedTasks.push(taskNumber);
+            }
+          }
+        } else {
+          // This is a task, update it in the todos array
+          const actualTaskIndex = todos.findIndex((t) => t.task === todo.task);
+          if (actualTaskIndex >= 0) {
+            todos[actualTaskIndex].completed = true;
+            updatedTasks.push(taskNumber);
+          }
+        }
       } else {
         console.log(
-          `⚠️ Task number ${taskNumber} is out of range. Available tasks: 1-${todos.length}`
+          `⚠️ Task number ${taskNumber} is out of range. Available items: 1-${allTodos.length}`
         );
       }
     }
 
     if (updatedTasks.length === 0) {
       throw new Error(
-        `No valid task numbers found. Available tasks: 1-${todos.length}`
+        `No valid task numbers found. Available items: 1-${allTodos.length}`
       );
     }
 
     await database.saveUser(userId, user);
     console.log(
-      `✅ Tasks updated for user: ${userId}, tasks: ${updatedTasks.join(", ")}`
+      `✅ Items updated for user: ${userId}, items: ${updatedTasks.join(", ")}`
     );
 
     return updatedTasks;

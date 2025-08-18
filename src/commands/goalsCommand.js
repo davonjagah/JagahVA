@@ -85,40 +85,29 @@ class GoalsCommand {
         return "Please provide valid numbers (e.g., 1, 2, 5)";
       }
 
-      // First try to update goals
-      let goalResults = null;
+      // Update items based on their position in the !today list
+      let results = null;
       try {
-        goalResults = await goalService.updateProgressByNumbers(
-          userId,
-          progressText
-        );
-      } catch (goalError) {
-        console.log("No goals to update or goal error:", goalError.message);
+        results = await todoService.updateTasksByNumbers(userId, numbers);
+      } catch (error) {
+        console.log("Error updating items:", error.message);
       }
 
-      // Then try to update tasks
-      let taskResults = null;
-      try {
-        taskResults = await todoService.updateTasksByNumbers(userId, numbers);
-      } catch (taskError) {
-        console.log("No tasks to update or task error:", taskError.message);
+      if (!results || results.length === 0) {
+        // Check what the user was trying to access
+        const allTodos = await todoService.generateTodos(userId, new Date());
+
+        let errorMsg = "❌ No valid numbers found to update.\n";
+        if (allTodos.length > 0) {
+          errorMsg += `📋 Available items: 1-${allTodos.length}\n`;
+        }
+        errorMsg += "\nUse !today to see your current tasks.";
+        return errorMsg;
       }
 
-      // Build response message
-      let response = "";
-      if (goalResults && typeof goalResults === "number" && goalResults > 0) {
-        response += `✅ Goals updated: ${goalResults} goal(s)\n`;
-      }
-      if (taskResults && Array.isArray(taskResults) && taskResults.length > 0) {
-        response += `✅ Tasks updated: ${taskResults.join(", ")}\n`;
-      }
-
-      if (!goalResults && !taskResults) {
-        return "ℹ️ No goals or tasks found to update.";
-      }
-
-      response += "\nUse !today to see your updated tasks.";
-      return response;
+      return `✅ Items updated: ${results.join(
+        ", "
+      )}\n\nUse !today to see your updated tasks.`;
     } catch (error) {
       return `❌ Error updating progress: ${error.message}`;
     }
