@@ -105,9 +105,30 @@ class GoalsCommand {
         return errorMsg;
       }
 
-      return `✅ Items updated: ${results.join(
-        ", "
-      )}\n\nUse !today to see your updated tasks.`;
+      // Automatically generate the updated today's tasks
+      const updatedTodos = await todoService.generateTodos(userId, new Date());
+      const todayFormatted = DateUtils.formatDateReadable(new Date());
+
+      let response = `✅ Items updated: ${results.join(", ")}\n\n`;
+      response += `📅 Today's Tasks (${todayFormatted}):\n\n`;
+
+      if (updatedTodos.length === 0) {
+        response += "📝 No tasks for today. Use !setgoals to get started!";
+      } else {
+        response += updatedTodos
+          .map((t, i) => {
+            let taskText = `${i + 1}. ${t.task}`;
+            if (t.weeklyProgress !== null && t.weeklyProgress !== undefined) {
+              taskText += ` (${t.weeklyProgress} this week)`;
+            }
+            taskText += ` - ${t.completed ? "✅ Done" : "⏳ Pending"}`;
+            return taskText;
+          })
+          .join("\n");
+        response += "\n\nUse !progress <numbers> to mark goals as completed.";
+      }
+
+      return response;
     } catch (error) {
       return `❌ Error updating progress: ${error.message}`;
     }
