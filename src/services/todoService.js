@@ -28,10 +28,15 @@ class TodoService {
             (p) => DateUtils.isInCurrentWeek(new Date(p.date)) && p.done
           ).length || 0;
 
+        // Check if this goal has been completed today
+        const today = DateUtils.formatDate(targetDate);
+        const completedToday =
+          goal.progress?.some((p) => p.date === today && p.done) || false;
+
         todos.push({
           task: goal.task,
           goalId: goal.id || `goal-${Date.now()}`,
-          completed: false,
+          completed: completedToday,
           type: "goal",
           weeklyProgress: goal.frequency === "weekly" ? weeklyProgress : null,
         });
@@ -126,7 +131,7 @@ class TodoService {
 
   async setDayTasks(userId, day, tasks) {
     const user = await database.getUser(userId);
-    
+
     if (!user.goals) user.goals = [];
     if (!user.todos) user.todos = {};
     if (!user.stats) user.stats = {};
@@ -138,7 +143,7 @@ class TodoService {
 
   async setDateTasks(userId, dateKey, tasks) {
     const user = await database.getUser(userId);
-    
+
     if (!user.goals) user.goals = [];
     if (!user.todos) user.todos = {};
     if (!user.stats) user.stats = {};

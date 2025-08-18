@@ -45,9 +45,22 @@ class ExpressServer {
                 // Import telegram client here to avoid circular dependency
                 const telegramClient = require("./telegram");
                 await telegramClient.sendMessage(msg.chat.id, text);
-                console.log("✅ Reply sent via webhook");
+                console.log(
+                  "✅ Reply sent via webhook:",
+                  text.substring(0, 50) + "..."
+                );
               } catch (error) {
                 console.error("❌ Error sending reply:", error);
+                // Fallback: try to send directly
+                try {
+                  const TelegramBot = require("node-telegram-bot-api");
+                  const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+                  await bot.sendMessage(msg.chat.id, text);
+                  console.log("✅ Fallback reply sent");
+                  await bot.close();
+                } catch (fallbackError) {
+                  console.error("❌ Fallback also failed:", fallbackError);
+                }
               }
             },
           };
