@@ -3,7 +3,7 @@ const DateUtils = require("../utils/dateUtils");
 
 class TodoService {
   async generateTodos(userId, targetDate = new Date()) {
-    const user = database.data.users[userId];
+    const user = await database.getUser(userId);
     if (!user || !user.goals || user.goals.length === 0) {
       return [];
     }
@@ -72,23 +72,25 @@ class TodoService {
 
   async saveTodos(userId, todos, targetDate = new Date()) {
     const targetDateStr = DateUtils.formatDate(targetDate);
+    const user = await database.getUser(userId);
 
-    if (!database.data.users[userId]) {
-      database.data.users[userId] = { goals: [], todos: {}, stats: {} };
-    }
+    if (!user.goals) user.goals = [];
+    if (!user.todos) user.todos = {};
+    if (!user.stats) user.stats = {};
 
-    database.data.users[userId].todos[targetDateStr] = todos;
-    await database.write();
+    user.todos[targetDateStr] = todos;
+    await database.saveUser(userId, user);
   }
 
   async addManualTask(userId, taskText) {
     const today = DateUtils.formatDate(new Date());
+    const user = await database.getUser(userId);
 
-    if (!database.data.users[userId]) {
-      database.data.users[userId] = { goals: [], todos: {}, stats: {} };
-    }
-    if (!database.data.users[userId].todos[today]) {
-      database.data.users[userId].todos[today] = [];
+    if (!user.goals) user.goals = [];
+    if (!user.todos) user.todos = {};
+    if (!user.stats) user.stats = {};
+    if (!user.todos[today]) {
+      user.todos[today] = [];
     }
 
     const newTask = {
@@ -98,15 +100,16 @@ class TodoService {
       type: "manual",
     };
 
-    database.data.users[userId].todos[today].push(newTask);
-    await database.write();
+    user.todos[today].push(newTask);
+    await database.saveUser(userId, user);
 
     return newTask;
   }
 
   async toggleTaskCompletion(userId, taskIndex, targetDate = new Date()) {
     const targetDateStr = DateUtils.formatDate(targetDate);
-    const todos = database.data.users[userId]?.todos[targetDateStr] || [];
+    const user = await database.getUser(userId);
+    const todos = user?.todos?.[targetDateStr] || [];
 
     if (taskIndex < 0 || taskIndex >= todos.length) {
       throw new Error(
@@ -116,33 +119,33 @@ class TodoService {
 
     const task = todos[taskIndex];
     task.completed = !task.completed;
-    await database.write();
+    await database.saveUser(userId, user);
 
     return task;
   }
 
   async setDayTasks(userId, day, tasks) {
-    if (!database.data.users[userId]) {
-      database.data.users[userId] = { goals: [], todos: {}, stats: {} };
-    }
-    if (!database.data.users[userId].dayTasks) {
-      database.data.users[userId].dayTasks = {};
-    }
+    const user = await database.getUser(userId);
+    
+    if (!user.goals) user.goals = [];
+    if (!user.todos) user.todos = {};
+    if (!user.stats) user.stats = {};
+    if (!user.dayTasks) user.dayTasks = {};
 
-    database.data.users[userId].dayTasks[day] = tasks;
-    await database.write();
+    user.dayTasks[day] = tasks;
+    await database.saveUser(userId, user);
   }
 
   async setDateTasks(userId, dateKey, tasks) {
-    if (!database.data.users[userId]) {
-      database.data.users[userId] = { goals: [], todos: {}, stats: {} };
-    }
-    if (!database.data.users[userId].dateTasks) {
-      database.data.users[userId].dateTasks = {};
-    }
+    const user = await database.getUser(userId);
+    
+    if (!user.goals) user.goals = [];
+    if (!user.todos) user.todos = {};
+    if (!user.stats) user.stats = {};
+    if (!user.dateTasks) user.dateTasks = {};
 
-    database.data.users[userId].dateTasks[dateKey] = tasks;
-    await database.write();
+    user.dateTasks[dateKey] = tasks;
+    await database.saveUser(userId, user);
   }
 }
 

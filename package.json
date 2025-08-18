@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "node tests/test.js"
+    "test": "node tests/test.js",
+    "migrate": "node scripts/migrate-to-mongodb.js"
   },
   "keywords": [
     "telegram",
@@ -26,6 +27,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.21.2",
     "lowdb": "^6.0.1",
+    "mongodb": "^6.3.0",
     "node-telegram-bot-api": "^0.66.0",
     "openai": "^4.20.1"
   },
@@ -37,10 +39,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/jagahva.git"
+    "url": "https://github.com/davonjagah/jagahva.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/jagahva/issues"
+    "url": "https://github.com/davonjagah/jagahva/issues"
   },
-  "homepage": "https://github.com/yourusername/jagahva#readme"
+  "homepage": "https://github.com/davonjagah/jagahva#readme"
 }

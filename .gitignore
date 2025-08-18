@@ -12,7 +12,7 @@ yarn-error.log*
 .env.production.local
 
 # Database
-db.json
+# db.json - Now using MongoDB Atlas for persistence
 *.db
 
 # Logs

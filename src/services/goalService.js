@@ -6,13 +6,14 @@ class GoalService {
   async setGoals(userId, goalsText) {
     try {
       const goals = Parser.parseGoals(goalsText);
+      const user = await database.getUser(userId);
 
-      if (!database.data.users[userId]) {
-        database.data.users[userId] = { goals: [], todos: {}, stats: {} };
-      }
+      if (!user.goals) user.goals = [];
+      if (!user.todos) user.todos = {};
+      if (!user.stats) user.stats = {};
 
-      database.data.users[userId].goals = goals;
-      await database.write();
+      user.goals = goals;
+      await database.saveUser(userId, user);
 
       console.log("✅ Goals saved successfully for user:", userId);
       return goals;
@@ -23,14 +24,14 @@ class GoalService {
   }
 
   async getGoals(userId) {
-    const user = database.data.users[userId];
+    const user = await database.getUser(userId);
     return user?.goals || [];
   }
 
   async logProgress(userId, progressText) {
     try {
       const progress = Parser.parseProgress(progressText);
-      const user = database.data.users[userId];
+      const user = await database.getUser(userId);
 
       if (!user || !user.goals || user.goals.length === 0) {
         throw new Error("No goals set. Use !setgoals first.");
@@ -52,7 +53,7 @@ class GoalService {
         });
       }
 
-      await database.write();
+      await database.saveUser(userId, user);
       console.log("✅ Progress logged successfully for user:", userId);
       return progress;
     } catch (error) {
@@ -62,7 +63,7 @@ class GoalService {
   }
 
   async getWeeklyProgress(userId) {
-    const user = database.data.users[userId];
+    const user = await database.getUser(userId);
     if (!user || !user.goals || user.goals.length === 0) {
       return [];
     }
@@ -89,16 +90,17 @@ class GoalService {
   }
 
   async clearGoals(userId) {
-    if (database.data.users[userId]) {
-      database.data.users[userId].goals = [];
-      await database.write();
+    const user = await database.getUser(userId);
+    if (user) {
+      user.goals = [];
+      await database.saveUser(userId, user);
       console.log("✅ Goals cleared for user:", userId);
     }
   }
 
   async updateProgressByNumbers(userId, progressText) {
     try {
-      const user = database.data.users[userId];
+      const user = await database.getUser(userId);
 
       if (!user || !user.goals || user.goals.length === 0) {
         throw new Error("No goals set. Use !setgoals first.");
@@ -148,7 +150,7 @@ class GoalService {
         return "ℹ️ All specified goals were already completed today.";
       }
 
-      await database.write();
+      await database.saveUser(userId, user);
       console.log(
         `✅ Progress updated for ${updatedCount} goals for user:`,
         userId

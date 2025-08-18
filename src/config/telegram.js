@@ -150,21 +150,15 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
       console.log(`🤖 Bot name: ${me.first_name}`);
       console.log(`🆔 Bot username: @${me.username}`);
 
-      // Clear any existing webhook to ensure polling works
-      try {
-        await this.bot.deleteWebHook();
-        console.log("🧹 Cleared any existing webhook");
-      } catch (webhookError) {
-        console.log(
-          "ℹ️ No webhook to clear or error clearing webhook:",
-          webhookError.message
-        );
+      // Check if we should use webhooks (for production on Render)
+      if (
+        process.env.NODE_ENV === "production" &&
+        process.env.RENDER_EXTERNAL_URL
+      ) {
+        await this.setupWebhook();
+      } else {
+        await this.setupPolling();
       }
-
-      // Start polling manually
-      console.log("🔄 Starting bot polling...");
-      this.bot.startPolling();
-      console.log("📱 Bot is ready to receive messages!");
 
       this.isInitialized = true;
       return this.bot;
@@ -172,6 +166,39 @@ Start by setting your goals with: !setgoals workout 3 times a week, read daily`;
       console.error("❌ Telegram bot initialization failed:", error);
       throw error;
     }
+  }
+
+  async setupWebhook() {
+    try {
+      const webhookUrl = `${process.env.RENDER_EXTERNAL_URL}/webhook`;
+      await this.bot.setWebHook(webhookUrl);
+      console.log(`🌐 Webhook set to: ${webhookUrl}`);
+      console.log("📱 Bot is ready to receive messages via webhook!");
+    } catch (error) {
+      console.error(
+        "❌ Failed to set webhook, falling back to polling:",
+        error
+      );
+      await this.setupPolling();
+    }
+  }
+
+  async setupPolling() {
+    // Clear any existing webhook to ensure polling works
+    try {
+      await this.bot.deleteWebHook();
+      console.log("🧹 Cleared any existing webhook");
+    } catch (webhookError) {
+      console.log(
+        "ℹ️ No webhook to clear or error clearing webhook:",
+        webhookError.message
+      );
+    }
+
+    // Start polling manually
+    console.log("🔄 Starting bot polling...");
+    this.bot.startPolling();
+    console.log("📱 Bot is ready to receive messages!");
   }
 
   async sendMessage(chatId, text) {

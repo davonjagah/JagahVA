@@ -19,6 +19,7 @@ class JagahVABot {
 
       // Setup Express server
       expressServer.setup();
+      expressServer.messageController = this.messageController; // Pass message controller
       expressServer.start();
 
       // Initialize Telegram bot and setup handlers
@@ -49,6 +50,7 @@ process.on("SIGINT", async () => {
   console.log("\n🛑 Shutting down JagahVA Bot...");
   try {
     await telegramClient.stop();
+    await database.close();
   } catch (error) {
     console.error("❌ Error during shutdown:", error);
   }
@@ -59,6 +61,7 @@ process.on("SIGTERM", async () => {
   console.log("\n🛑 Shutting down JagahVA Bot...");
   try {
     await telegramClient.stop();
+    await database.close();
   } catch (error) {
     console.error("❌ Error during shutdown:", error);
   }
