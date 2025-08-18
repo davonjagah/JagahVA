@@ -41,9 +41,14 @@ class ExpressServer {
             from: userId,
             body: msg.text || "",
             reply: async (text) => {
-              // We'll need to send this through the bot instance
-              // This is a simplified version - you might need to adjust
-              console.log("Reply:", text);
+              try {
+                // Import telegram client here to avoid circular dependency
+                const telegramClient = require("./telegram");
+                await telegramClient.sendMessage(msg.chat.id, text);
+                console.log("✅ Reply sent via webhook");
+              } catch (error) {
+                console.error("❌ Error sending reply:", error);
+              }
             },
           };
 

@@ -99,6 +99,17 @@ process.on("SIGTERM", async () => {
   process.exit(0);
 });
 
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error);
+  console.log("🔄 Attempting to continue...");
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  console.log("🔄 Attempting to continue...");
+});
+
 // Start the bot
 const bot = new JagahVABot();
 bot.start().catch(console.error);
