@@ -27,6 +27,7 @@ class HelpCommand {
 📊 OTHER:
    !stats - View your statistics
    !prayer - Daily prayer
+   !affirmations - Daily affirmations
    !help - Show this help message
 
 🌐 Visit the web interface for detailed guidelines!`;

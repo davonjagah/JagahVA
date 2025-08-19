@@ -4,6 +4,7 @@ const TomorrowCommand = require("../commands/tomorrowCommand");
 const GoalsCommand = require("../commands/goalsCommand");
 const TaskCommand = require("../commands/taskCommand");
 const PrayerCommand = require("../commands/prayerCommand");
+const AffirmationsCommand = require("../commands/affirmationsCommand");
 const telegramClient = require("../config/telegram");
 
 class MessageController {
@@ -75,6 +76,8 @@ class MessageController {
         response = "📊 Statistics feature coming soon!";
       } else if (msg.body === "!prayer") {
         response = await PrayerCommand.execute(msg);
+      } else if (msg.body === "!affirmations") {
+        response = await AffirmationsCommand.execute(msg);
       }
 
       if (response) {
