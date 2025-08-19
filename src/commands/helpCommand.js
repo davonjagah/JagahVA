@@ -26,6 +26,7 @@ class HelpCommand {
 
 📊 OTHER:
    !stats - View your statistics
+   !prayer - Daily prayer
    !help - Show this help message
 
 🌐 Visit the web interface for detailed guidelines!`;
@@ -36,4 +37,4 @@ class HelpCommand {
   }
 }
 
-module.exports = HelpCommand; 
+module.exports = HelpCommand;
